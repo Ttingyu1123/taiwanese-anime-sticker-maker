@@ -1,0 +1,7 @@
+{
+  "name": "Taiwanese Anime Sticker Maker",
+  "description": "Upload a photo and transform yourself into a creative LINE-style sticker using popular Taiwanese slang and dramatic anime effects.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
