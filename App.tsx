@@ -11,7 +11,7 @@ const App: React.FC = () => {
   const [showKeyModal, setShowKeyModal] = useState(false);
   const [tempKey, setTempKey] = useState('');
 
-  const [selectedModel, setSelectedModel] = useState<string>('gemini-2.5-flash-image');
+  const [selectedModel, setSelectedModel] = useState<string>('gemini-2.0-flash-exp');
   const [image, setImage] = useState<string | null>(null);
   const [selectedPhrase, setSelectedPhrase] = useState<string>('');
   const [customPhrase, setCustomPhrase] = useState<string>('');
@@ -334,8 +334,8 @@ const App: React.FC = () => {
                 onChange={handleModelChange}
                 className="pl-9 pr-8 py-2 bg-[#F7FAFC] border border-gray-300 rounded-full text-xs font-bold text-gray-700 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer max-w-[100px] sm:max-w-none truncate"
               >
-                <option value="gemini-2.5-flash-image">標準模式</option>
-                <option value="gemini-3-pro-image-preview">專業模式</option>
+                <option value="gemini-2.0-flash-exp">標準模式</option>
+                <option value="gemini-3-pro-image-preview">Nanobanana Pro</option>
               </select>
             </div>
             <button
