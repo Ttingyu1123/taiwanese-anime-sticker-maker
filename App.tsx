@@ -304,18 +304,27 @@ const App: React.FC = () => {
         </div>
       )}
 
-      <header className="bg-white shadow-sm sticky top-0 z-50 border-b border-gray-100">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="bg-green-500 p-2 rounded-xl text-white shadow-lg shadow-green-200">
+      <header className="bg-[#285E61] shadow-sm sticky top-0 z-50 border-b border-[#285E61]">
+        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between relative">
+          {/* Left: Back Home Link */}
+          <div className="flex-shrink-0 z-10">
+            <a href="https://tingyusdeco.com/" className="text-[#F7FAFC] font-bold text-sm hover:underline flex items-center gap-1">
+              <LinkIcon size={16} /> Back Home
+            </a>
+          </div>
+
+          {/* Center: Title */}
+          <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 flex items-center gap-2">
+            <div className="bg-green-500 p-2 rounded-xl text-white shadow-lg shadow-green-900/20">
               <Sparkles size={24} />
             </div>
-            <h1 className="text-xl font-black text-gray-800 tracking-tight hidden sm:block">
-              台漫<span className="text-green-500">貼圖王</span>
+            <h1 className="text-xl font-black text-[#F7FAFC] tracking-tight hidden sm:block">
+              台漫<span className="text-[#D1E9E9]">貼圖王</span>
             </h1>
           </div>
 
-          <div className="flex items-center gap-3">
+          {/* Right: Actions */}
+          <div className="flex items-center gap-3 z-10">
             <div className="relative group">
               <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-gray-400">
                 <Cpu size={14} />
@@ -323,7 +332,7 @@ const App: React.FC = () => {
               <select
                 value={selectedModel}
                 onChange={handleModelChange}
-                className="pl-9 pr-8 py-2 bg-gray-50 border border-gray-200 rounded-full text-xs font-bold text-gray-700 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                className="pl-9 pr-8 py-2 bg-[#F7FAFC] border border-gray-300 rounded-full text-xs font-bold text-gray-700 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
               >
                 <option value="gemini-2.5-flash-image">標準模式</option>
                 <option value="gemini-3-pro-image-preview">專業模式</option>
@@ -533,6 +542,14 @@ const App: React.FC = () => {
           </div>
         )}
       </main>
+
+      <footer className="bg-[#285E61] py-8 text-center text-[#F7FAFC]">
+        <div className="max-w-5xl mx-auto px-4">
+          <p className="text-sm font-bold opacity-80">
+            &copy; {new Date().getFullYear()} 台漫貼圖王
+          </p>
+        </div>
+      </footer>
     </div>
   );
 };

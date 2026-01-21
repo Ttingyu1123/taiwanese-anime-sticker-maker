@@ -30,7 +30,11 @@ export const COMMON_PHRASES: PhraseOption[] = [
   { text: "水啦", description: "太棒了（台語）" },
   { text: "有料喔", description: "很有實力、內容扎實" },
   { text: "沒毛病", description: "沒問題、很完美" },
-  { text: "太超過了", description: "太誇張了" }
+  { text: "太超過了", description: "太誇張了" },
+  { text: "甘溫拿", description: "感恩啊（台語）" },
+  { text: "眼神死", description: "無奈、放棄治療" },
+  { text: "哩供蝦毀", description: "你說什麼（台語）" },
+  { text: "爽啦", description: "心情愉悅" }
 ];
 
 export const STICKER_STYLES: StickerStyle[] = [
