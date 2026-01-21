@@ -308,31 +308,31 @@ const App: React.FC = () => {
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between relative">
           {/* Left: Back Home Link */}
           <div className="flex-shrink-0 z-10">
-            <a href="https://tingyusdeco.com/" className="text-[#F7FAFC] font-bold text-sm hover:underline flex items-center gap-1">
-              <LinkIcon size={16} /> Back Home
+            <a href="https://tingyusdeco.com/" className="text-[#F7FAFC] font-bold text-sm hover:underline flex items-center gap-1" aria-label="Back Home">
+              <LinkIcon size={18} /> <span className="hidden sm:inline">Back Home</span>
             </a>
           </div>
 
           {/* Center: Title */}
-          <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 flex items-center gap-2">
-            <div className="bg-green-500 p-2 rounded-xl text-white shadow-lg shadow-green-900/20">
-              <Sparkles size={24} />
+          <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 flex items-center gap-2 w-max pointer-events-none">
+            <div className="bg-green-500 p-1.5 sm:p-2 rounded-xl text-white shadow-lg shadow-green-900/20">
+              <Sparkles size={20} className="sm:w-6 sm:h-6" />
             </div>
-            <h1 className="text-xl font-black text-[#F7FAFC] tracking-tight hidden sm:block">
+            <h1 className="text-lg sm:text-xl font-black text-[#F7FAFC] tracking-tight">
               台漫<span className="text-[#D1E9E9]">貼圖王</span>
             </h1>
           </div>
 
           {/* Right: Actions */}
-          <div className="flex items-center gap-3 z-10">
-            <div className="relative group">
+          <div className="flex items-center gap-2 sm:gap-3 z-10">
+            <div className="relative group hidden xs:block"> {/* Optional: Hide select on VERY small screens if needed, but keeping it for now unless requested */}
               <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-gray-400">
                 <Cpu size={14} />
               </div>
               <select
                 value={selectedModel}
                 onChange={handleModelChange}
-                className="pl-9 pr-8 py-2 bg-[#F7FAFC] border border-gray-300 rounded-full text-xs font-bold text-gray-700 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                className="pl-9 pr-8 py-2 bg-[#F7FAFC] border border-gray-300 rounded-full text-xs font-bold text-gray-700 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer max-w-[100px] sm:max-w-none truncate"
               >
                 <option value="gemini-2.5-flash-image">標準模式</option>
                 <option value="gemini-3-pro-image-preview">專業模式</option>
