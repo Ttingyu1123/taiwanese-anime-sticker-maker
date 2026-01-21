@@ -350,9 +350,12 @@ const App: React.FC = () => {
             <div className="space-y-3">
               <h2 className="text-lg font-black text-blue-900">貼圖製作指南</h2>
               <ul className="text-sm text-blue-800 space-y-2 font-medium">
-                <li>● <strong>BYOK 模式</strong>：請輸入您自己的 Google Gemini API Key 以使用服務。</li>
+                <li>● <strong>API Key 設定</strong>：點擊右上角鑰匙圖示，輸入您的 Google Gemini API Key 即可開始使用。</li>
+                <li>● <strong>上傳照片</strong>：請上傳清晰的人像照片，AI 將會以此作為角色面部特徵的參考。</li>
+                <li>● <strong>風格與台詞</strong>：選擇喜歡的貼圖風格，並搭配內建台語慣用語或自訂台詞。</li>
                 <li>● <strong>邊框設定</strong>：除了「寫實貼紙」風格帶白框，其餘風格均為乾淨切邊。</li>
-                <li>● <strong>綠幕技術</strong>：採用智慧 Flood Fill 去背，保護眼睛細節與邊緣完整度。</li>
+                <li>● <strong>綠幕去背</strong>：採用智慧 Flood Fill 技術，自動移除背景並保留細節。</li>
+                <li>● <strong>打包下載</strong>：生成完成後，可單張下載或將整組貼圖打包成 ZIP 檔。</li>
               </ul>
             </div>
           </div>
