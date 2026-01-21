@@ -261,7 +261,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white pb-20 relative">
+    <div className="min-h-screen bg-[#F0F8FF] pb-20 relative">
 
       {/* API Key Modal */}
       {showKeyModal && (
