@@ -2,13 +2,14 @@
 import { GoogleGenAI } from "@google/genai";
 
 export async function generateSticker(
+  apiKey: string,
   base64Image: string, 
   phrase: string, 
   model: string, 
   styleSnippet: string,
   includeText: boolean
 ): Promise<string> {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey });
   
   const textInstruction = includeText 
     ? `TYPOGRAPHY:

@@ -1,13 +1,16 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Camera, Upload, Trash2, Download, Plus, Sparkles, Image as ImageIcon, Key, ExternalLink, Cpu, Settings, Palette, Type, Ban, FileArchive, Layers, Info, AlertTriangle, ExternalLink as LinkIcon, Scissors, Check } from 'lucide-react';
+import { Camera, Upload, Trash2, Download, Plus, Sparkles, Image as ImageIcon, Key, ExternalLink, Cpu, Settings, Palette, Type, Ban, FileArchive, Layers, Info, AlertTriangle, ExternalLink as LinkIcon, Scissors, Check, X } from 'lucide-react';
 import JSZip from 'jszip';
 import Button from './components/Button';
 import { generateSticker } from './services/geminiService';
 import { COMMON_PHRASES, STICKER_STYLES, Sticker } from './types';
 
 const App: React.FC = () => {
-  const [hasKey, setHasKey] = useState<boolean | null>(null);
+  const [apiKey, setApiKey] = useState<string>('');
+  const [showKeyModal, setShowKeyModal] = useState(false);
+  const [tempKey, setTempKey] = useState('');
+
   const [selectedModel, setSelectedModel] = useState<string>('gemini-2.5-flash-image');
   const [image, setImage] = useState<string | null>(null);
   const [selectedPhrase, setSelectedPhrase] = useState<string>('');
@@ -24,35 +27,34 @@ const App: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    checkKey();
+    const storedKey = localStorage.getItem('gemini_api_key');
+    if (storedKey) {
+      setApiKey(storedKey);
+    } else {
+      setShowKeyModal(true);
+    }
   }, []);
 
-  const checkKey = async () => {
-    try {
-      const result = await window.aistudio.hasSelectedApiKey();
-      setHasKey(result);
-      return result;
-    } catch (e) {
-      console.error("Error checking API key:", e);
-      return false;
+  const handleSaveKey = () => {
+    if (!tempKey.trim()) {
+      setError("請輸入有效的 API Key");
+      return;
     }
+    setApiKey(tempKey.trim());
+    localStorage.setItem('gemini_api_key', tempKey.trim());
+    setShowKeyModal(false);
+    setError(null);
   };
 
-  const handleSelectKey = async () => {
-    await window.aistudio.openSelectKey();
-    setHasKey(true);
+  const handleClearKey = () => {
+    setApiKey('');
+    localStorage.removeItem('gemini_api_key');
+    setTempKey('');
+    setShowKeyModal(true);
   };
 
-  const handleModelChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newModel = e.target.value;
-    setSelectedModel(newModel);
-    
-    if (newModel === 'gemini-3-pro-image-preview') {
-      const keyExists = await checkKey();
-      if (!keyExists) {
-        handleSelectKey();
-      }
-    }
+  const handleModelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedModel(e.target.value);
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -84,18 +86,18 @@ const App: React.FC = () => {
         canvas.height = height;
         const ctx = canvas.getContext('2d', { willReadFrequently: true })!;
         ctx.drawImage(img, 0, 0);
-        
+
         const imageData = ctx.getImageData(0, 0, width, height);
         const data = imageData.data;
         const isBg = new Uint8Array(width * height);
-        
+
         // 1. Detect if the background is actually green
         const corners = [[0, 0], [width - 1, 0], [0, height - 1], [width - 1, height - 1]];
-        
+
         // 2. Flood Fill starting from corners
         const queue: [number, number][] = [...corners as [number, number][]];
         const visited = new Uint8Array(width * height);
-        
+
         const isGreen = (r: number, g: number, b: number) => {
           // Chroma Key logic: Green channel must be dominant
           // We allow for noise: g is high, and at least 15% higher than r and b
@@ -149,6 +151,10 @@ const App: React.FC = () => {
   };
 
   const handleGenerate = async () => {
+    if (!apiKey) {
+      setShowKeyModal(true);
+      return;
+    }
     if (!image) {
       setError("請先上傳照片！");
       return;
@@ -165,7 +171,7 @@ const App: React.FC = () => {
     setProgress({ current: 0, total: batchSize });
 
     const style = STICKER_STYLES.find(s => s.id === selectedStyleId) || STICKER_STYLES[0];
-    
+
     try {
       for (let i = 0; i < batchSize; i++) {
         let phraseToUse = '';
@@ -175,8 +181,15 @@ const App: React.FC = () => {
           phraseToUse = i < COMMON_PHRASES.length ? COMMON_PHRASES[i].text : COMMON_PHRASES[i % COMMON_PHRASES.length].text;
         }
 
-        let resultImageUrl = await generateSticker(image, phraseToUse, selectedModel, style.promptSnippet, includeText);
-        
+        let resultImageUrl = await generateSticker(
+          apiKey,
+          image,
+          phraseToUse,
+          selectedModel,
+          style.promptSnippet,
+          includeText
+        );
+
         // Apply auto background removal if selected
         if (autoRemoveBg) {
           resultImageUrl = await smartRemoveBackground(resultImageUrl);
@@ -188,19 +201,18 @@ const App: React.FC = () => {
           phrase: phraseToUse,
           timestamp: Date.now()
         };
-        
+
         setStickers(prev => [newSticker, ...prev]);
         setProgress(prev => ({ ...prev, current: i + 1 }));
       }
     } catch (err: any) {
-      if (err.message === "KEY_NOT_FOUND") {
-        setHasKey(false);
-        setError("API Key 效期已過或未找到，請重新選取。");
-        handleSelectKey();
-      } else {
-        setError(`生成失敗。請確認您的 API Key 是否為 Paid Tier 1 以上。`);
-      }
       console.error(err);
+      if (err.message === "KEY_NOT_FOUND" || err.message?.includes("403") || err.message?.includes("401")) { // Expanded error check
+        setError("API Key 無效或過期，請重新輸入。");
+        setShowKeyModal(true);
+      } else {
+        setError(`生成失敗，錯誤訊息: ${err.message || '未知錯誤'}`);
+      }
     } finally {
       setIsGenerating(false);
     }
@@ -209,7 +221,7 @@ const App: React.FC = () => {
   const handleIndividualBgRemoval = async (stickerId: string) => {
     const sticker = stickers.find(s => s.id === stickerId);
     if (!sticker) return;
-    
+
     const transparentUrl = await smartRemoveBackground(sticker.imageUrl);
     setStickers(prev => prev.map(s => s.id === stickerId ? { ...s, imageUrl: transparentUrl } : s));
   };
@@ -249,7 +261,49 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white pb-20">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white pb-20 relative">
+
+      {/* API Key Modal */}
+      {showKeyModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border border-gray-100">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="bg-green-100 p-3 rounded-full text-green-600">
+                <Key size={24} />
+              </div>
+              <h2 className="text-2xl font-black text-gray-800">設定 API Key</h2>
+            </div>
+
+            <p className="text-gray-500 mb-6 font-medium">
+              本應用程式需要 Google Gemini API Key 才能運作。您的 Key 僅會儲存在您的瀏覽器中，不會傳送到我們的伺服器。
+            </p>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">API Key</label>
+                <input
+                  type="password"
+                  value={tempKey}
+                  onChange={(e) => setTempKey(e.target.value)}
+                  placeholder="Paste your Gemini API Key here"
+                  className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:outline-none transition-colors font-mono text-sm"
+                />
+              </div>
+
+              <Button onClick={handleSaveKey} className="w-full text-lg py-3 rounded-xl">
+                儲存並開始使用
+              </Button>
+
+              <div className="text-center mt-4">
+                <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-blue-500 text-sm font-bold hover:underline flex items-center justify-center gap-1">
+                  沒有 Key 嗎？在此獲取 <ExternalLink size={14} />
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <header className="bg-white shadow-sm sticky top-0 z-50 border-b border-gray-100">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -260,13 +314,13 @@ const App: React.FC = () => {
               台漫<span className="text-green-500">貼圖王</span>
             </h1>
           </div>
-          
+
           <div className="flex items-center gap-3">
             <div className="relative group">
               <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-gray-400">
                 <Cpu size={14} />
               </div>
-              <select 
+              <select
                 value={selectedModel}
                 onChange={handleModelChange}
                 className="pl-9 pr-8 py-2 bg-gray-50 border border-gray-200 rounded-full text-xs font-bold text-gray-700 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
@@ -275,9 +329,10 @@ const App: React.FC = () => {
                 <option value="gemini-3-pro-image-preview">專業模式</option>
               </select>
             </div>
-            <button 
-              onClick={handleSelectKey}
-              className={`p-2 rounded-full transition-all border ${hasKey ? 'bg-green-50 border-green-200 text-green-600' : 'bg-white border-gray-200 text-gray-600'}`}
+            <button
+              onClick={() => { setTempKey(apiKey); setShowKeyModal(true); }}
+              className={`p-2 rounded-full transition-all border ${apiKey ? 'bg-green-50 border-green-200 text-green-600' : 'bg-red-50 border-red-200 text-red-600 animate-pulse'}`}
+              title="設定 API Key"
             >
               <Key size={18} />
             </button>
@@ -295,9 +350,9 @@ const App: React.FC = () => {
             <div className="space-y-3">
               <h2 className="text-lg font-black text-blue-900">貼圖製作指南</h2>
               <ul className="text-sm text-blue-800 space-y-2 font-medium">
+                <li>● <strong>BYOK 模式</strong>：請輸入您自己的 Google Gemini API Key 以使用服務。</li>
                 <li>● <strong>邊框設定</strong>：除了「寫實貼紙」風格帶白框，其餘風格均為乾淨切邊。</li>
                 <li>● <strong>綠幕技術</strong>：採用智慧 Flood Fill 去背，保護眼睛細節與邊緣完整度。</li>
-                <li>● 前往 <a href="https://aistudio.google.com/" target="_blank" className="underline text-blue-600">Google AI Studio</a> 設定計費帳戶即可。</li>
               </ul>
             </div>
           </div>
