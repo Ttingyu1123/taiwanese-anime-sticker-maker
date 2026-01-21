@@ -325,7 +325,7 @@ const App: React.FC = () => {
 
           {/* Right: Actions */}
           <div className="flex items-center gap-2 sm:gap-3 z-10">
-            <div className="relative group hidden xs:block"> {/* Optional: Hide select on VERY small screens if needed, but keeping it for now unless requested */}
+            <div className="relative group">
               <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-gray-400">
                 <Cpu size={14} />
               </div>
