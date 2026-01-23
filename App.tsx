@@ -354,17 +354,8 @@ const App: React.FC = () => {
                 <LinkIcon size={12} /> Back Home
               </a>
             </div>
-            <div className="relative group">
-              <select
-                value={selectedModel}
-                onChange={handleModelChange}
-                className="pl-3 pr-8 py-2 bg-[#F2EFE9] border border-[#E6E2DE] hover:border-[#B5838D]/30 rounded-xl text-[10px] font-bold text-[#6D6875] appearance-none focus:outline-none cursor-pointer transition-all shadow-sm"
-              >
-                <option value="gemini-2.5-flash-preview-09-2025">Gemini 2.5 Flash</option>
-                <option value="gemini-3-pro-image-preview">Nanobanana Pro (Image Gen)</option>
-              </select>
-              <div className="absolute right-2 top-1/2 -translate-y-1/2 text-[#9A8C98] pointer-events-none"><Cpu size={12} /></div>
-            </div>
+            {/* Model Selector removed as per user request to strictly use Nanobanana Pro */}
+
             <button
               onClick={() => { setTempKey(apiKey); setShowKeyModal(true); }}
               className={`p-2 rounded-xl transition-all border ${apiKey ? 'bg-[#F2EFE9] border-[#E6E2DE] text-[#B5838D]' : 'bg-red-50 border-red-200 text-red-500 animate-pulse'}`}
@@ -386,7 +377,7 @@ const App: React.FC = () => {
           <div className="space-y-2 z-10">
             <h2 className="text-sm font-black text-[#6D6875] uppercase tracking-wider">貼圖製作指南</h2>
             <p className="text-xs font-bold text-[#9A8C98] leading-relaxed max-w-2xl">
-              歡迎使用台漫貼圖王！請確認已設定 <span className="text-[#B5838D]">API Key</span>。上傳清晰人像，選擇喜愛的風格與台詞，AI 將為您生成去背完美的 LINE/Telegram 貼圖。支援批次生成與 ZIP 打包。
+              歡迎使用台漫貼圖王！請確認已設定 <span className="text-[#B5838D]">API Key</span>。上傳清晰人像，選擇喜愛的風格與台詞，AI (Nanobanana Pro) 將為您生成去背完美的 LINE/Telegram 貼圖。支援批次生成與 ZIP 打包。
             </p>
           </div>
         </section>
