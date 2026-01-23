@@ -542,8 +542,8 @@ const App: React.FC = () => {
         )}
       </main>
 
-      <footer className="mt-20 py-8 border-t border-[#E6E2DE] text-center bg-white/50 backdrop-blur-sm">
-        <p className="text-[9px] text-[#9A8C98] font-bold uppercase tracking-[0.2em]">&copy; {new Date().getFullYear()} StickerMaster AI</p>
+      <footer className="fixed bottom-0 w-full bg-white/60 backdrop-blur-xl border-t border-[#E6E2DE] py-4 text-center z-40">
+        <p className="text-[9px] text-[#9A8C98] font-bold uppercase tracking-[0.2em] opacity-80">&copy; {new Date().getFullYear()} StickerMaster AI</p>
       </footer>
 
       {/* Loading Overlay */}
