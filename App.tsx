@@ -1,10 +1,38 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Camera, Upload, Trash2, Download, Plus, Sparkles, Image as ImageIcon, Key, ExternalLink, Cpu, Settings, Palette, Type, Ban, FileArchive, Layers, Info, AlertTriangle, ExternalLink as LinkIcon, Scissors, Check, X } from 'lucide-react';
+import { Camera, Upload, Trash2, Download, Plus, Sparkles, Image as ImageIcon, Key, ExternalLink, Cpu, Settings, Palette, Type, Ban, FileArchive, Layers, Info, AlertTriangle, ExternalLink as LinkIcon, Scissors, Check, X, RefreshCw, Wand2, Star, ChevronRight, ShieldCheck, Ruler, Move } from 'lucide-react';
 import JSZip from 'jszip';
 import Button from './components/Button';
 import { generateSticker } from './services/geminiService';
 import { COMMON_PHRASES, STICKER_STYLES, Sticker } from './types';
+
+const Stepper = ({ label, value, min, max, onChange }: { label: string, value: number, min: number, max: number, onChange: (val: number) => void }) => (
+  <div className="space-y-1">
+    <label className="text-[10px] font-bold text-[#9A8C98] uppercase tracking-wider">{label}</label>
+    <div className="flex items-center bg-[#F2EFE9] border border-[#E6E2DE] rounded-2xl overflow-hidden shadow-sm">
+      <button
+        onClick={() => onChange(Math.max(min, value - 1))}
+        className="p-3 text-[#9A8C98] hover:bg-[#E6E2DE] active:bg-[#D8D4CF] transition-colors"
+        disabled={value <= min}
+      >
+        <span className="text-sm font-bold">-</span>
+      </button>
+      <input
+        type="number"
+        value={value}
+        readOnly
+        className="w-full py-2 text-center bg-transparent font-bold text-sm outline-none appearance-none text-[#5E503F]"
+      />
+      <button
+        onClick={() => onChange(Math.min(max, value + 1))}
+        className="p-3 text-[#5E503F] hover:bg-[#E6E2DE] active:bg-[#D8D4CF] transition-colors"
+        disabled={value >= max}
+      >
+        <span className="text-sm font-bold">+</span>
+      </button>
+    </div>
+  </div>
+);
 
 const App: React.FC = () => {
   const [apiKey, setApiKey] = useState<string>('');
@@ -24,6 +52,7 @@ const App: React.FC = () => {
   const [stickers, setStickers] = useState<Sticker[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isZipping, setIsZipping] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -69,6 +98,20 @@ const App: React.FC = () => {
     }
   };
 
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImage(reader.result as string);
+        setError(null);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   /**
    * SMART CHROMA KEY REMOVAL
    * Optimized for #00FF00 background. 
@@ -99,8 +142,6 @@ const App: React.FC = () => {
         const visited = new Uint8Array(width * height);
 
         const isGreen = (r: number, g: number, b: number) => {
-          // Chroma Key logic: Green channel must be dominant
-          // We allow for noise: g is high, and at least 15% higher than r and b
           return g > 80 && g > r * 1.15 && g > b * 1.15;
         };
 
@@ -122,13 +163,11 @@ const App: React.FC = () => {
         }
 
         // 3. Dilation (Halo Cleanup)
-        // We eat 1 pixel into the subject to remove the green fringe
         const expandedBg = new Uint8Array(isBg);
         for (let y = 1; y < height - 1; y++) {
           for (let x = 1; x < width - 1; x++) {
             const idx = y * width + x;
             if (isBg[idx] === 0) {
-              // Check 4-connectivity
               if (isBg[idx - 1] || isBg[idx + 1] || isBg[idx - width] || isBg[idx + width]) {
                 expandedBg[idx] = 1;
               }
@@ -190,7 +229,6 @@ const App: React.FC = () => {
           includeText
         );
 
-        // Apply auto background removal if selected
         if (autoRemoveBg) {
           resultImageUrl = await smartRemoveBackground(resultImageUrl);
         }
@@ -207,7 +245,7 @@ const App: React.FC = () => {
       }
     } catch (err: any) {
       console.error(err);
-      if (err.message === "KEY_NOT_FOUND" || err.message?.includes("403") || err.message?.includes("401")) { // Expanded error check
+      if (err.message === "KEY_NOT_FOUND" || err.message?.includes("403") || err.message?.includes("401")) {
         setError("API Key 無效或過期，請重新輸入。");
         setShowKeyModal(true);
       } else {
@@ -261,42 +299,38 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#D1E9E9] pb-20 relative">
+    <div className="min-h-screen pb-20 select-none bg-[#FAF7F5] font-sans text-[#5E503F]">
 
       {/* API Key Modal */}
       {showKeyModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border border-gray-100">
+        <div className="fixed inset-0 bg-white/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
+          <div className="bg-white/90 backdrop-blur-md rounded-3xl p-8 max-w-md w-full shadow-2xl border border-white ring-1 ring-[#E6E2DE]">
             <div className="flex items-center gap-3 mb-6">
-              <div className="bg-green-100 p-3 rounded-full text-green-600">
+              <div className="bg-[#B5838D] p-3 rounded-2xl text-white shadow-lg shadow-[#B5838D]/20">
                 <Key size={24} />
               </div>
-              <h2 className="text-2xl font-black text-gray-800">設定 API Key</h2>
+              <h2 className="text-2xl font-black text-[#6D6875]">設定 API Key</h2>
             </div>
-
-            <p className="text-gray-500 mb-6 font-medium">
-              本應用程式需要 Google Gemini API Key 才能運作。您的 Key 僅會儲存在您的瀏覽器中，不會傳送到我們的伺服器。
+            <p className="text-[#9A8C98] mb-6 font-bold text-sm leading-relaxed">
+              本應用程式需要 Google Gemini API Key。Key 僅儲存於瀏覽器，絕不傳送至伺服器。
             </p>
-
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">API Key</label>
+                <label className="block text-[10px] font-bold text-[#9A8C98] uppercase tracking-wider mb-2">API Key</label>
                 <input
                   type="password"
                   value={tempKey}
                   onChange={(e) => setTempKey(e.target.value)}
-                  placeholder="Paste your Gemini API Key here"
-                  className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:outline-none transition-colors font-mono text-sm"
+                  placeholder="Paste Gemini API Key here"
+                  className="w-full px-4 py-3 bg-[#F2EFE9] border border-[#E6E2DE] rounded-xl focus:border-[#B5838D] focus:ring-2 focus:ring-[#B5838D]/20 focus:outline-none transition-all font-mono text-sm text-[#5E503F]"
                 />
               </div>
-
-              <Button onClick={handleSaveKey} className="w-full text-lg py-3 rounded-xl">
-                儲存並開始使用
+              <Button onClick={handleSaveKey} className="w-full text-lg py-3 rounded-2xl shadow-lg shadow-[#B5838D]/20">
+                儲存並開始
               </Button>
-
               <div className="text-center mt-4">
-                <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-blue-500 text-sm font-bold hover:underline flex items-center justify-center gap-1">
-                  沒有 Key 嗎？在此獲取 <ExternalLink size={14} />
+                <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-[#B5838D] text-xs font-bold hover:underline flex items-center justify-center gap-1">
+                  沒有 Key 嗎？在此獲取 <ExternalLink size={12} />
                 </a>
               </div>
             </div>
@@ -304,252 +338,242 @@ const App: React.FC = () => {
         </div>
       )}
 
-      <header className="bg-[#285E61] shadow-sm sticky top-0 z-50 border-b border-[#285E61]">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between relative">
-          {/* Left: Back Home Link */}
-          <div className="flex-shrink-0 z-10">
-            <a href="https://tingyusdeco.com/" className="text-[#F7FAFC] font-bold text-sm hover:underline flex items-center gap-1" aria-label="Back Home">
-              <LinkIcon size={18} /> <span className="hidden sm:inline">Back Home</span>
-            </a>
-          </div>
-
-          {/* Center: Title */}
-          <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 flex items-center gap-2 w-max pointer-events-none">
-            <div className="bg-green-500 p-1.5 sm:p-2 rounded-xl text-white shadow-lg shadow-green-900/20">
-              <Sparkles size={20} className="sm:w-6 sm:h-6" />
+      {/* Nav */}
+      <nav className="glass-card border-b border-[#E6E2DE]/50 sticky top-0 z-50 px-6 py-4 shadow-sm bg-white/70 backdrop-blur-md">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="bg-[#B5838D] p-2.5 rounded-2xl text-white shadow-lg shadow-[#B5838D]/20"><Sparkles size={20} /></div>
+            <div>
+              <h1 className="text-xl font-black bg-clip-text text-transparent bg-gradient-to-r from-[#B5838D] to-[#6D6875] tracking-tight leading-none">台漫貼圖王</h1>
+              <span className="text-[9px] font-bold text-[#9A8C98] uppercase tracking-[0.2em]">Taiwanese Anime Sticker</span>
             </div>
-            <h1 className="text-lg sm:text-xl font-black text-[#F7FAFC] tracking-tight">
-              台漫<span className="text-[#D1E9E9]">貼圖王</span>
-            </h1>
           </div>
-
-          {/* Right: Actions */}
-          <div className="flex items-center gap-2 sm:gap-3 z-10">
+          <div className="flex items-center gap-3">
+            <div className="hidden sm:flex items-center gap-2 mr-4">
+              <a href="https://tingyusdeco.com/" className="text-[10px] font-bold text-[#9A8C98] hover:text-[#B5838D] flex items-center gap-1 transition-colors">
+                <LinkIcon size={12} /> Back Home
+              </a>
+            </div>
             <div className="relative group">
-              <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-gray-400">
-                <Cpu size={14} />
-              </div>
               <select
                 value={selectedModel}
                 onChange={handleModelChange}
-                className="pl-9 pr-8 py-2 bg-[#F7FAFC] border border-gray-300 rounded-full text-xs font-bold text-gray-700 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer max-w-[100px] sm:max-w-none truncate"
+                className="pl-3 pr-8 py-2 bg-[#F2EFE9] border border-[#E6E2DE] hover:border-[#B5838D]/30 rounded-xl text-[10px] font-bold text-[#6D6875] appearance-none focus:outline-none cursor-pointer transition-all shadow-sm"
               >
-                <option value="gemini-2.5-flash-preview-09-2025">標準模式 (Gemini 2.5 Flash)</option>
+                <option value="gemini-2.5-flash-preview-09-2025">Gemini 2.5 Flash</option>
                 <option value="gemini-3-pro-image-preview">Nanobanana Pro</option>
               </select>
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 text-[#9A8C98] pointer-events-none"><Cpu size={12} /></div>
             </div>
             <button
               onClick={() => { setTempKey(apiKey); setShowKeyModal(true); }}
-              className={`p-2 rounded-full transition-all border ${apiKey ? 'bg-green-50 border-green-200 text-green-600' : 'bg-red-50 border-red-200 text-red-600 animate-pulse'}`}
-              title="設定 API Key"
+              className={`p-2 rounded-xl transition-all border ${apiKey ? 'bg-[#F2EFE9] border-[#E6E2DE] text-[#B5838D]' : 'bg-red-50 border-red-200 text-red-500 animate-pulse'}`}
             >
-              <Key size={18} />
+              <Key size={16} />
             </button>
           </div>
         </div>
-      </header>
+      </nav>
 
-      <main className="max-w-4xl mx-auto px-4 py-8 space-y-8">
-        {/* 重要公告 */}
-        <section className="bg-blue-50 rounded-3xl p-6 border-2 border-blue-100 shadow-sm">
-          <div className="flex items-start gap-4">
-            <div className="bg-blue-500 p-2 rounded-xl text-white mt-1">
-              <Info size={24} />
-            </div>
-            <div className="space-y-3">
-              <h2 className="text-lg font-black text-blue-900">貼圖製作指南</h2>
-              <ul className="text-sm text-blue-800 space-y-2 font-medium">
-                <li>● <strong>API Key 設定</strong>：點擊右上角鑰匙圖示，輸入您的 Google Gemini API Key 即可開始使用。</li>
-                <li>● <strong>上傳照片</strong>：請上傳清晰的人像照片，AI 將會以此作為角色面部特徵的參考。</li>
-                <li>● <strong>風格與台詞</strong>：選擇喜歡的貼圖風格，並搭配內建台語慣用語或自訂台詞。</li>
-                <li>● <strong>邊框設定</strong>：除了「寫實貼紙」風格帶白框，其餘風格均為乾淨切邊。</li>
-                <li>● <strong>綠幕去背</strong>：採用智慧 Flood Fill 技術，自動移除背景並保留細節。</li>
-                <li>● <strong>打包下載</strong>：生成完成後，可單張下載或將整組貼圖打包成 ZIP 檔。</li>
-              </ul>
-            </div>
+      <main className="max-w-5xl mx-auto px-6 mt-8 space-y-8">
+
+        {/* Info Card */}
+        <section className="bg-white rounded-[2rem] border border-[#E6E2DE] shadow-sm p-6 flex flex-col sm:flex-row gap-6 relative overflow-hidden">
+          <div className="absolute -right-10 -top-10 w-40 h-40 bg-[#FAF7F5] rounded-full opacity-50 pointer-events-none" />
+          <div className="bg-[#E5989B] p-4 rounded-2xl text-white shadow-lg shadow-[#E5989B]/20 flex items-center justify-center h-fit z-10">
+            <Info size={24} />
+          </div>
+          <div className="space-y-2 z-10">
+            <h2 className="text-sm font-black text-[#6D6875] uppercase tracking-wider">貼圖製作指南</h2>
+            <p className="text-xs font-bold text-[#9A8C98] leading-relaxed max-w-2xl">
+              歡迎使用台漫貼圖王！請確認已設定 <span className="text-[#B5838D]">API Key</span>。上傳清晰人像，選擇喜愛的風格與台詞，AI 將為您生成去背完美的 LINE/Telegram 貼圖。支援批次生成與 ZIP 打包。
+            </p>
           </div>
         </section>
 
-        {/* Step 1: Upload */}
-        <section className="bg-white rounded-3xl p-6 shadow-xl border border-gray-100">
-          <h2 className="text-lg font-bold mb-4 flex items-center gap-2 text-gray-700">
-            <span className="bg-blue-100 text-blue-600 px-2 py-0.5 rounded text-sm font-black">STEP 1</span>
-            上傳照片
-          </h2>
+        {/* Upload Section */}
+        <section className="bg-white rounded-[2rem] border border-[#E6E2DE] shadow-sm p-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-sm font-black flex items-center gap-2 text-[#6D6875] uppercase tracking-wider"><ImageIcon size={18} className="text-[#B5838D]" /> 階段一：上傳照片</h2>
+            {image && <button onClick={() => setImage(null)} className="text-[10px] font-bold text-red-400 hover:text-red-500 flex items-center gap-1"><Trash2 size={12} /> 移除重選</button>}
+          </div>
+
           {!image ? (
-            <div onClick={() => fileInputRef.current?.click()} className="border-4 border-dashed border-blue-50 rounded-2xl py-12 flex flex-col items-center justify-center cursor-pointer hover:bg-blue-50 transition-colors">
-              <div className="bg-blue-100 p-4 rounded-full text-blue-500 mb-4 shadow-inner">
-                <Upload size={40} />
+            <div
+              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+              onDragLeave={() => setIsDragging(false)}
+              onDrop={handleDrop}
+              onClick={() => fileInputRef.current?.click()}
+              className={`group border-4 border-dashed rounded-[2rem] p-12 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 min-h-[300px] ${isDragging ? 'drag-active border-[#B5838D] bg-[#B5838D]/5' : 'border-[#E6E2DE] bg-[#FAF7F5] hover:border-[#B5838D]/30 hover:bg-[#F2EFE9]'}`}
+            >
+              <input ref={fileInputRef} type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
+              <div className="bg-white p-6 rounded-full group-hover:scale-110 transition-transform duration-500 shadow-sm border border-[#E6E2DE] text-[#B5838D] mb-6">
+                <Upload size={32} />
               </div>
-              <p className="text-gray-500 font-black">點擊或拖放照片</p>
-              <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageUpload} />
+              <h3 className="text-lg font-black text-[#6D6875] tracking-tight">點擊或拖曳照片至此</h3>
+              <p className="mt-2 text-[#9A8C98] font-bold text-xs tracking-wide">支援 JPG, PNG, WebP</p>
             </div>
           ) : (
-            <div className="relative rounded-2xl overflow-hidden border-2 border-gray-100">
-              <img src={image} alt="Preview" className="w-full max-h-[300px] object-contain bg-slate-900" />
-              <button onClick={() => setImage(null)} className="absolute top-4 right-4 bg-red-500 text-white p-3 rounded-full shadow-xl">
-                <Trash2 size={20} />
-              </button>
+            <div className="relative rounded-[2rem] overflow-hidden border border-[#E6E2DE] bg-[#FAF7F5] shadow-inner max-h-[500px] flex items-center justify-center p-4">
+              <img src={image} alt="Preview" className="max-w-full max-h-full object-contain rounded-xl drop-shadow-xl" />
             </div>
           )}
         </section>
 
-        {/* Step 2: Style */}
-        <section className="bg-white rounded-3xl p-6 shadow-xl border border-gray-100">
-          <h2 className="text-lg font-bold mb-4 flex items-center gap-2 text-gray-700">
-            <span className="bg-purple-100 text-purple-600 px-2 py-0.5 rounded text-sm font-black">STEP 2</span>
-            選擇風格
-          </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-            {STICKER_STYLES.map((style) => (
-              <button key={style.id} onClick={() => setSelectedStyleId(style.id)} className={`p-3 rounded-2xl border-2 transition-all flex flex-col items-center text-center ${selectedStyleId === style.id ? 'border-purple-500 bg-purple-50 text-purple-600 scale-105' : 'border-gray-50 text-gray-500'}`}>
-                <div className={`p-2 rounded-full mb-1 ${selectedStyleId === style.id ? 'bg-purple-500 text-white' : 'bg-gray-100'}`}><Palette size={16} /></div>
-                <span className="text-xs font-black">{style.name}</span>
-              </button>
-            ))}
-          </div>
-        </section>
+        {/* Configuration Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
-        {/* Step 3: Phrase */}
-        <section className="bg-white rounded-3xl p-6 shadow-xl border border-gray-100">
-          <h2 className="text-lg font-bold mb-4 flex items-center gap-2 text-gray-700">
-            <span className="bg-green-100 text-green-600 px-2 py-0.5 rounded text-sm font-black">STEP 3</span>
-            選擇慣用語
-          </h2>
-          <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mb-4">
-            {COMMON_PHRASES.map((phrase) => (
-              <button key={phrase.text} onClick={() => { setSelectedPhrase(phrase.text); setCustomPhrase(''); setBatchSize(1); }} className={`p-3 rounded-2xl border-2 transition-all text-sm font-bold ${selectedPhrase === phrase.text && batchSize === 1 ? 'border-green-500 bg-green-50 text-green-600 shadow-md' : 'border-gray-50 text-gray-500'}`}>
-                {phrase.text}
-              </button>
-            ))}
-          </div>
-          <input type="text" placeholder="或是自訂台詞..." className={`w-full px-4 py-3 bg-gray-50 rounded-2xl border-2 font-bold ${customPhrase && batchSize === 1 ? 'border-green-500 bg-white shadow-lg' : 'border-transparent'}`} value={customPhrase} onChange={(e) => { setCustomPhrase(e.target.value); setSelectedPhrase(''); setBatchSize(1); }} />
-        </section>
-
-        {/* Step 4: Quantity */}
-        <section className="bg-white rounded-3xl p-6 shadow-xl border border-gray-100">
-          <h2 className="text-lg font-bold mb-4 flex items-center gap-2 text-gray-700">
-            <span className="bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded text-sm font-black">STEP 4</span>
-            生成數量
-          </h2>
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-            {[1, 8, 16, 24, 36, 40].map((num) => (
-              <button key={num} onClick={() => setBatchSize(num)} className={`p-3 rounded-2xl border-2 transition-all flex flex-col items-center ${batchSize === num ? 'border-indigo-500 bg-indigo-50 text-indigo-600 scale-105 shadow-md' : 'border-gray-50 text-gray-500'}`}>
-                <div className="font-black text-lg">{num}</div>
-                <div className="text-[10px] opacity-60 font-bold">{num === 1 ? '單張' : '張批次'}</div>
-              </button>
-            ))}
-          </div>
-        </section>
-
-        {/* Step 5: Advanced Settings */}
-        <section className="bg-white rounded-3xl p-6 shadow-xl border border-gray-100">
-          <h2 className="text-lg font-bold mb-4 flex items-center gap-2 text-gray-700">
-            <span className="bg-orange-100 text-orange-600 px-2 py-0.5 rounded text-sm font-black">STEP 5</span>
-            輸出設定
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-3">
-              <label className="text-sm font-black text-gray-500 px-1">文字顯示</label>
-              <div className="grid grid-cols-2 gap-2">
-                <button onClick={() => setIncludeText(true)} className={`p-4 rounded-2xl border-2 flex flex-col items-center gap-2 ${includeText ? 'border-orange-500 bg-orange-50 text-orange-600' : 'border-gray-50 text-gray-400'}`}>
-                  <Type size={20} /><span className="font-black text-sm">加上文字</span>
-                </button>
-                <button onClick={() => setIncludeText(false)} className={`p-4 rounded-2xl border-2 flex flex-col items-center gap-2 ${!includeText ? 'border-orange-500 bg-orange-50 text-orange-600' : 'border-gray-50 text-gray-400'}`}>
-                  <Ban size={20} /><span className="font-black text-sm">不加文字</span>
-                </button>
-              </div>
-            </div>
-            <div className="space-y-3">
-              <label className="text-sm font-black text-gray-500 px-1">背景處理</label>
-              <div onClick={() => setAutoRemoveBg(!autoRemoveBg)} className={`p-4 rounded-2xl border-2 flex items-center justify-between cursor-pointer transition-all ${autoRemoveBg ? 'border-green-500 bg-green-50 text-green-700' : 'border-gray-50 bg-gray-50 text-gray-400'}`}>
-                <div className="flex items-center gap-3">
-                  <Scissors size={20} />
-                  <div>
-                    <div className="font-black text-sm">智慧綠幕去背</div>
-                    <div className="text-[10px] font-bold opacity-60">自動優化動漫切邊與貼紙白框</div>
+          {/* Style Selection */}
+          <section className="bg-white rounded-[2rem] border border-[#E6E2DE] shadow-sm p-8 space-y-6">
+            <h2 className="text-sm font-black flex items-center gap-2 text-[#6D6875] uppercase tracking-wider"><Palette size={18} className="text-[#B5838D]" /> 階段二：風格選擇</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {STICKER_STYLES.map((style) => (
+                <button
+                  key={style.id}
+                  onClick={() => setSelectedStyleId(style.id)}
+                  className={`p-4 rounded-2xl border transition-all flex flex-col items-center gap-2 text-center group ${selectedStyleId === style.id ? 'bg-[#FAF7F5] border-[#B5838D] shadow-inner' : 'bg-white border-[#E6E2DE] hover:border-[#B5838D]/30'}`}
+                >
+                  <div className={`p-2 rounded-full transition-colors ${selectedStyleId === style.id ? 'bg-[#B5838D] text-white shadow-sm' : 'bg-[#F2EFE9] text-[#9A8C98]'}`}>
+                    <Palette size={16} />
                   </div>
-                </div>
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center ${autoRemoveBg ? 'bg-green-500 text-white' : 'bg-gray-300 text-white'}`}>
-                  {autoRemoveBg && <Check size={14} />}
-                </div>
-              </div>
+                  <span className={`text-xs font-black ${selectedStyleId === style.id ? 'text-[#B5838D]' : 'text-[#6D6875]'}`}>{style.name}</span>
+                </button>
+              ))}
             </div>
-          </div>
-        </section>
+          </section>
 
-        {error && (
-          <div className="bg-red-50 text-red-600 p-6 rounded-3xl border-2 border-red-100 text-center space-y-2">
-            <div className="flex justify-center mb-1"><AlertTriangle size={32} /></div>
-            <div className="font-black text-lg">發生錯誤</div>
-            <div className="font-bold">{error}</div>
-          </div>
-        )}
-
-        <div className="sticky bottom-6 flex justify-center z-40 px-4">
-          <Button onClick={handleGenerate} isLoading={isGenerating} disabled={!image || (batchSize === 1 && !selectedPhrase && !customPhrase)} className="w-full max-w-sm h-16 text-xl shadow-2xl rounded-3xl">
-            {isGenerating ? `生成中 (${progress.current}/${batchSize})` : batchSize > 1 ? `啟動批次生成 (${batchSize}張)` : '生成單一貼圖'}
-          </Button>
+          {/* Phrase Selection */}
+          <section className="bg-white rounded-[2rem] border border-[#E6E2DE] shadow-sm p-8 space-y-6">
+            <h2 className="text-sm font-black flex items-center gap-2 text-[#6D6875] uppercase tracking-wider"><Type size={18} className="text-[#B5838D]" /> 階段三：慣用語</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {COMMON_PHRASES.map((phrase) => (
+                <button
+                  key={phrase.text}
+                  onClick={() => { setSelectedPhrase(phrase.text); setCustomPhrase(''); setBatchSize(1); }}
+                  className={`py-2 px-3 rounded-xl border text-[10px] font-bold transition-all ${selectedPhrase === phrase.text && batchSize === 1 ? 'bg-[#E5989B] text-white border-[#E5989B] shadow-md' : 'bg-white text-[#6D6875] border-[#E6E2DE] hover:border-[#E5989B]/50'}`}
+                >
+                  {phrase.text}
+                </button>
+              ))}
+            </div>
+            <input
+              type="text"
+              placeholder="或是自訂台詞..."
+              value={customPhrase}
+              onChange={(e) => { setCustomPhrase(e.target.value); setSelectedPhrase(''); setBatchSize(1); }}
+              className="w-full px-4 py-3 bg-[#F2EFE9] border border-[#E6E2DE] rounded-2xl font-bold text-xs outline-none focus:border-[#B5838D] focus:ring-2 focus:ring-[#B5838D]/10 text-[#5E503F] shadow-inner placeholder-[#9A8C98]"
+            />
+          </section>
         </div>
 
+        {/* Generate Options */}
+        <section className="bg-white rounded-[2rem] border border-[#E6E2DE] shadow-sm p-8 space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-black flex items-center gap-2 text-[#6D6875] uppercase tracking-wider"><Settings size={18} className="text-[#B5838D]" /> 階段四：生成設定</h2>
+            <span className="text-[9px] font-bold bg-[#FAF7F5] px-3 py-1 rounded-full text-[#B5838D] border border-[#E6E2DE]">{batchSize} 張貼圖</span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="space-y-3">
+              <label className="text-[10px] font-bold text-[#9A8C98] uppercase tracking-wider">生成數量 (Batch Size)</label>
+              <div className="flex flex-wrap gap-2">
+                {[1, 8, 16, 24, 40].map((num) => (
+                  <button
+                    key={num}
+                    onClick={() => setBatchSize(num)}
+                    className={`w-10 h-10 rounded-xl font-black text-xs border transition-all flex items-center justify-center ${batchSize === num ? 'bg-[#6D6875] text-white border-[#6D6875] shadow-lg' : 'bg-white border-[#E6E2DE] text-[#9A8C98] hover:border-[#6D6875]/50'}`}
+                  >
+                    {num}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <label className="text-[10px] font-bold text-[#9A8C98] uppercase tracking-wider">文字顯示</label>
+              <div className="flex bg-[#F2EFE9] p-1 rounded-xl border border-[#E6E2DE] w-fit">
+                <button onClick={() => setIncludeText(true)} className={`px-4 py-2 rounded-lg text-[10px] font-bold transition-all ${includeText ? 'bg-white shadow-sm text-[#B5838D]' : 'text-[#9A8C98]'}`}>有文字</button>
+                <button onClick={() => setIncludeText(false)} className={`px-4 py-2 rounded-lg text-[10px] font-bold transition-all ${!includeText ? 'bg-white shadow-sm text-[#B5838D]' : 'text-[#9A8C98]'}`}>無文字</button>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <label className="text-[10px] font-bold text-[#9A8C98] uppercase tracking-wider">背景處理</label>
+              <div onClick={() => setAutoRemoveBg(!autoRemoveBg)} className={`flex items-center justify-between p-3 rounded-2xl border cursor-pointer transition-all ${autoRemoveBg ? 'bg-[#F9F8F6] border-[#B5838D]/30 shadow-sm' : 'bg-white border-[#E6E2DE]'}`}>
+                <div className="flex items-center gap-3">
+                  <Scissors size={16} className={autoRemoveBg ? 'text-[#B5838D]' : 'text-[#C5C6C7]'} />
+                  <span className="text-xs font-bold text-[#6D6875]">智慧去背</span>
+                </div>
+                <div className={`w-8 h-5 rounded-full relative transition-colors ${autoRemoveBg ? 'bg-[#B5838D]' : 'bg-[#E6E2DE]'}`}>
+                  <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all shadow-sm ${autoRemoveBg ? 'right-1' : 'left-1'}`} />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {error && (
+            <div className="bg-red-50 text-red-700 p-4 rounded-2xl border border-red-100 flex items-center justify-center gap-3 animate-in slide-in-from-top-2">
+              <AlertTriangle size={18} />
+              <span className="text-xs font-bold">{error}</span>
+            </div>
+          )}
+
+          <Button onClick={handleGenerate} isLoading={isGenerating} disabled={!image || (batchSize === 1 && !selectedPhrase && !customPhrase)} className="w-full text-lg h-16 shadow-xl shadow-[#B5838D]/20">
+            <Wand2 size={24} /> {isGenerating ? `生成中...` : '立即生成'}
+          </Button>
+        </section>
+
+        {/* Results Gallery */}
         {stickers.length > 0 && (
           <section className="space-y-6">
-            <div className="flex items-center justify-between px-2">
-              <h2 className="text-2xl font-black text-gray-800">我的貼圖包 ({stickers.length})</h2>
-              <Button variant="outline" onClick={downloadAllAsZip} isLoading={isZipping} className="px-4 py-2 text-sm border-blue-500 text-blue-600 hover:bg-blue-50">
-                <FileArchive size={18} /> 打包下載 (ZIP)
-              </Button>
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-black flex items-center gap-2 text-[#6D6875] uppercase tracking-wider"><Star size={18} className="text-[#E5989B]" /> 生成結果 ({stickers.length})</h2>
+              <button onClick={downloadAllAsZip} disabled={isZipping} className="bg-[#FAF7F5] hover:bg-[#F2EFE9] text-[#6D6875] border border-[#E6E2DE] px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all">
+                <FileArchive size={14} /> 打包下載
+              </button>
             </div>
+
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
               {stickers.map((sticker) => (
-                <div key={sticker.id} className="bg-white rounded-3xl p-3 shadow-lg border border-gray-100 group animate-in zoom-in-95 duration-300">
-                  <div className="aspect-square rounded-2xl bg-gray-50 overflow-hidden relative shadow-inner" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'16\' height=\'16\' viewBox=\'0 0 8 8\'%3E%3Cpath fill=\'%23e5e7eb\' d=\'M0 0h4v4H0zm4 4h4v4H4z\'/%3E%3C/svg%3E")' }}>
+                <div key={sticker.id} className="bg-white rounded-3xl p-3 shadow-sm border border-[#E6E2DE] group hover:shadow-md transition-all animate-in zoom-in-95 duration-300">
+                  <div className="aspect-square rounded-2xl bg-[#FAF7F5] overflow-hidden relative border border-[#E6E2DE]/50" style={{ backgroundImage: 'radial-gradient(#e2e8f0 1px, transparent 1px)', backgroundSize: '10px 10px' }}>
                     <img src={sticker.imageUrl} alt={sticker.phrase} className="w-full h-full object-contain" />
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-2 items-center justify-center backdrop-blur-sm">
-                      <div className="flex gap-2">
-                        <button onClick={() => downloadImage(sticker.imageUrl, sticker.phrase)} title="下載單張" className="bg-white p-3 rounded-full text-green-500 hover:scale-110 shadow-xl transition-all">
-                          <Download size={20} />
-                        </button>
-                        <button onClick={() => handleIndividualBgRemoval(sticker.id)} title="手動去背" className="bg-white p-3 rounded-full text-blue-500 hover:scale-110 shadow-xl transition-all">
-                          <Scissors size={20} />
-                        </button>
-                      </div>
+                    <div className="absolute inset-0 bg-white/40 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2 items-center justify-center backdrop-blur-sm">
+                      <button onClick={() => downloadImage(sticker.imageUrl, sticker.phrase)} className="bg-white p-2.5 rounded-full text-[#B5838D] shadow-lg hover:scale-110 transition-transform"><Download size={18} /></button>
+                      <button onClick={() => handleIndividualBgRemoval(sticker.id)} className="bg-white p-2.5 rounded-full text-[#6D6875] shadow-lg hover:scale-110 transition-transform"><Scissors size={18} /></button>
                     </div>
                   </div>
-                  <div className="mt-3 text-center font-black text-gray-700 tracking-wider text-sm truncate">{sticker.phrase}</div>
+                  <div className="mt-3 text-center font-black text-[#5E503F] tracking-wider text-xs truncate opacity-80">{sticker.phrase}</div>
                 </div>
               ))}
             </div>
           </section>
         )}
-
-        {isGenerating && (
-          <div className="fixed inset-0 bg-white/90 backdrop-blur-lg z-[60] flex flex-col items-center justify-center p-6 text-center animate-in fade-in">
-            <div className="relative w-40 h-40 mb-8">
-              <div className="absolute inset-0 border-[10px] border-green-50 rounded-full"></div>
-              <div className="absolute inset-0 border-[10px] border-green-500 rounded-full border-t-transparent animate-spin"></div>
-              <div className="absolute inset-0 flex items-center justify-center text-green-500">
-                <Palette size={56} className="animate-pulse" />
-              </div>
-            </div>
-            <h3 className="text-3xl font-black text-gray-800 mb-2">{batchSize > 1 ? `批次生成中 (${progress.current}/${batchSize})` : '正在覺醒中二魂...'}</h3>
-            <p className="text-gray-500 font-bold max-w-xs text-sm">正在繪製貼圖並處理綠幕背景...</p>
-            {batchSize > 1 && (
-              <div className="w-full max-w-xs bg-gray-100 h-2 rounded-full mt-6 overflow-hidden">
-                <div className="bg-green-500 h-full transition-all duration-500" style={{ width: `${(progress.current / batchSize) * 100}%` }}></div>
-              </div>
-            )}
-          </div>
-        )}
       </main>
 
-      <footer className="bg-[#285E61] py-8 text-center text-[#F7FAFC]">
-        <div className="max-w-5xl mx-auto px-4">
-          <p className="text-sm font-bold opacity-80">
-            &copy; {new Date().getFullYear()} 台漫貼圖王
-          </p>
-        </div>
+      <footer className="mt-20 py-8 border-t border-[#E6E2DE] text-center bg-white/50 backdrop-blur-sm">
+        <p className="text-[9px] text-[#9A8C98] font-bold uppercase tracking-[0.2em]">&copy; {new Date().getFullYear()} StickerMaster AI</p>
       </footer>
+
+      {/* Loading Overlay */}
+      {isGenerating && (
+        <div className="fixed inset-0 bg-white/80 backdrop-blur-lg z-[60] flex flex-col items-center justify-center p-6 text-center animate-in fade-in">
+          <div className="relative w-24 h-24 mb-6">
+            <div className="absolute inset-0 border-4 border-[#F2EFE9] rounded-full"></div>
+            <div className="absolute inset-0 border-4 border-[#B5838D] rounded-full border-t-transparent animate-spin"></div>
+            <div className="absolute inset-0 flex items-center justify-center text-[#B5838D]">
+              <Sparkles size={32} className="animate-pulse" />
+            </div>
+          </div>
+          <h3 className="text-xl font-black text-[#6D6875] mb-2">{batchSize > 1 ? `批次生成中 (${progress.current}/${batchSize})` : 'AI 繪製中...'}</h3>
+          <p className="text-[#9A8C98] font-bold text-xs tracking-wide">正在施展綠幕魔法與去背工藝</p>
+          {batchSize > 1 && (
+            <div className="w-64 bg-[#F2EFE9] h-1.5 rounded-full mt-6 overflow-hidden">
+              <div className="bg-[#B5838D] h-full transition-all duration-300" style={{ width: `${(progress.current / batchSize) * 100}%` }}></div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
