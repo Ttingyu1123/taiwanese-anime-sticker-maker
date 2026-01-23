@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Camera, Upload, Trash2, Download, Plus, Sparkles, Image as ImageIcon, Key, ExternalLink, Cpu, Settings, Palette, Type, Ban, FileArchive, Layers, Info, AlertTriangle, ExternalLink as LinkIcon, Scissors, Check, X, RefreshCw, Wand2, Star, ChevronRight, ShieldCheck, Ruler, Move } from 'lucide-react';
+import { Camera, Upload, Trash2, Download, Plus, Sparkles, Image as ImageIcon, Key, ExternalLink, Cpu, Settings, Palette, Type, Ban, FileArchive, Layers, Info, AlertTriangle, ExternalLink as LinkIcon, Scissors, Check, X, RefreshCw, Wand2, Star, ChevronRight, ShieldCheck, Ruler, Move, Home } from 'lucide-react';
 import JSZip from 'jszip';
 import Button from './components/Button';
 import { generateSticker } from './services/geminiService';
@@ -349,9 +349,9 @@ const App: React.FC = () => {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="hidden sm:flex items-center gap-2 mr-4">
+            <div className="flex items-center gap-2 mr-2">
               <a href="https://tingyusdeco.com/" className="text-[10px] font-bold text-[#9A8C98] hover:text-[#B5838D] flex items-center gap-1 transition-colors">
-                <LinkIcon size={12} /> Back Home
+                <Home size={16} /> <span className="hidden sm:inline">Back Home</span>
               </a>
             </div>
             {/* Model Selector removed as per user request to strictly use Nanobanana Pro */}
@@ -543,7 +543,7 @@ const App: React.FC = () => {
       </main>
 
       <footer className="fixed bottom-0 w-full bg-white/60 backdrop-blur-xl border-t border-[#E6E2DE] py-4 text-center z-40">
-        <p className="text-[9px] text-[#9A8C98] font-bold uppercase tracking-[0.2em] opacity-80">&copy; {new Date().getFullYear()} StickerMaster AI</p>
+        <p className="text-[9px] text-[#9A8C98] font-bold uppercase tracking-[0.2em] opacity-80">&copy; 2026 TingYu's Deco · TingYu’s AI Art · All rights reserved</p>
       </footer>
 
       {/* Loading Overlay */}
