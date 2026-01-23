@@ -50,14 +50,14 @@ export async function generateSticker(
   try {
     const config: any = {};
 
-    // Only apply imageConfig for models that explicitly support/require it (like Imagen 3)
-    // Gemini 2.5 Flash (and similar multimodal models) might not support these specific params
-    // or strictly reject 'aspectRatio' if it defaults to 1:1 or handles it differently.
     if (model === 'gemini-3-pro-image-preview') {
       config.imageConfig = {
         aspectRatio: "1:1",
         imageSize: "1K"
       };
+    } else if (model === 'gemini-2.5-flash-preview-09-2025') {
+      // Attempt to force image generation for Gemini 2.5 Flash
+      config.responseMimeType = "image/jpeg";
     }
 
     const response = await ai.models.generateContent({
@@ -87,17 +87,31 @@ export async function generateSticker(
     }
 
     const parts = candidate.content?.parts;
+
+    // If parts are missing, check if it's because safety blocked it or other reason
     if (!parts || !Array.isArray(parts)) {
-      throw new Error(`Invalid response structure: 'parts' is missing or not an array. Finish Reason: ${candidate.finishReason}`);
+      throw new Error(`Invalid response structure: 'parts' is missing. Finish Reason: ${candidate.finishReason}`);
     }
 
     let imageUrl = '';
+    let textContent = '';
+
     for (const part of parts) {
       if (part.inlineData) {
         imageUrl = `data:image/png;base64,${part.inlineData.data}`;
         break;
       }
+      if (part.text) {
+        textContent += part.text;
+      }
     }
+
+    if (!imageUrl) {
+      console.warn("No image found in response. Text content:", textContent);
+      throw new Error(`Model returned text instead of image: "${textContent.slice(0, 100)}..." (Reason: ${candidate.finishReason})`);
+    }
+
+    return imageUrl;
 
     if (!imageUrl) {
       throw new Error('Failed to extract image from response');

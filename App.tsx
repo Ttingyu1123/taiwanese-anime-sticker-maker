@@ -360,6 +360,7 @@ const App: React.FC = () => {
                 onChange={handleModelChange}
                 className="pl-3 pr-8 py-2 bg-[#F2EFE9] border border-[#E6E2DE] hover:border-[#B5838D]/30 rounded-xl text-[10px] font-bold text-[#6D6875] appearance-none focus:outline-none cursor-pointer transition-all shadow-sm"
               >
+                <option value="gemini-2.5-flash-preview-09-2025">Gemini 2.5 Flash</option>
                 <option value="gemini-3-pro-image-preview">Nanobanana Pro (Image Gen)</option>
               </select>
               <div className="absolute right-2 top-1/2 -translate-y-1/2 text-[#9A8C98] pointer-events-none"><Cpu size={12} /></div>
