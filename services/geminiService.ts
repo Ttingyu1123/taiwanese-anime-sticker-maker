@@ -56,8 +56,8 @@ export async function generateSticker(
         imageSize: "1K"
       };
     } else if (model.includes('flash')) {
-      // Gemini 2.5 Flash (and similar) requiring native image output
-      config.responseMimeType = "image/jpeg";
+      // Gemini Flash models often do not support native image output mimetype.
+      // We leave config empty and handle text response in the error block below.
     }
 
     const response = await ai.models.generateContent({
