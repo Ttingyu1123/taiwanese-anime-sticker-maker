@@ -55,8 +55,8 @@ export async function generateSticker(
         aspectRatio: "1:1",
         imageSize: "1K"
       };
-    } else if (model === 'gemini-2.5-flash-preview-09-2025') {
-      // Attempt to force image generation for Gemini 2.5 Flash
+    } else if (model.includes('flash')) {
+      // Gemini 2.5 Flash (and similar) requiring native image output
       config.responseMimeType = "image/jpeg";
     }
 
