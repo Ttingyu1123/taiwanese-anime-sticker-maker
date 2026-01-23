@@ -76,8 +76,23 @@ export async function generateSticker(
       config: config
     });
 
+    console.log("Gemini Response:", JSON.stringify(response, null, 2));
+
+    const candidate = response.candidates?.[0];
+    if (!candidate) throw new Error("No candidates returned from model.");
+
+    // Check for safety finish reason
+    if (candidate.finishReason !== "STOP" && candidate.finishReason !== undefined) {
+      console.warn("Model finished with reason:", candidate.finishReason);
+    }
+
+    const parts = candidate.content?.parts;
+    if (!parts || !Array.isArray(parts)) {
+      throw new Error(`Invalid response structure: 'parts' is missing or not an array. Finish Reason: ${candidate.finishReason}`);
+    }
+
     let imageUrl = '';
-    for (const part of response.candidates[0].content.parts) {
+    for (const part of parts) {
       if (part.inlineData) {
         imageUrl = `data:image/png;base64,${part.inlineData.data}`;
         break;
