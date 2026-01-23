@@ -3,15 +3,15 @@ import { GoogleGenAI } from "@google/genai";
 
 export async function generateSticker(
   apiKey: string,
-  base64Image: string, 
-  phrase: string, 
-  model: string, 
+  base64Image: string,
+  phrase: string,
+  model: string,
   styleSnippet: string,
   includeText: boolean
 ): Promise<string> {
   const ai = new GoogleGenAI({ apiKey });
-  
-  const textInstruction = includeText 
+
+  const textInstruction = includeText
     ? `TYPOGRAPHY:
        - Overlay the Traditional Chinese text "${phrase}" in a large, bold, playful font.
        - The text should be clear and well-integrated into the composition.`
@@ -31,8 +31,8 @@ export async function generateSticker(
     - EXPRESSION & POSE: Exaggerate the expression to match the energy of the Taiwanese phrase "${phrase}".
     
     BORDER & EDGES (CRITICAL):
-    ${isStickerWithBorder 
-      ? "- This specific style MUST have a thick, solid white sticker border." 
+    ${isStickerWithBorder
+      ? "- This specific style MUST have a thick, solid white sticker border."
       : "- STRICT FORBIDDEN: DO NOT add any white border, offset, outline, or glow. The character's outermost lines must be the black ink lines or the character colors themselves, touching the green background directly."}
     
     BACKGROUND (CRITICAL CHROMA KEY):
@@ -48,14 +48,16 @@ export async function generateSticker(
   `;
 
   try {
-    const config: any = {
-      imageConfig: {
-        aspectRatio: "1:1",
-      }
-    };
+    const config: any = {};
 
+    // Only apply imageConfig for models that explicitly support/require it (like Imagen 3)
+    // Gemini 2.5 Flash (and similar multimodal models) might not support these specific params
+    // or strictly reject 'aspectRatio' if it defaults to 1:1 or handles it differently.
     if (model === 'gemini-3-pro-image-preview') {
-      config.imageConfig.imageSize = "1K";
+      config.imageConfig = {
+        aspectRatio: "1:1",
+        imageSize: "1K"
+      };
     }
 
     const response = await ai.models.generateContent({
@@ -90,7 +92,7 @@ export async function generateSticker(
   } catch (error: any) {
     console.error("Error generating sticker:", error);
     if (error.message?.includes("Requested entity was not found")) {
-        throw new Error("KEY_NOT_FOUND");
+      throw new Error("KEY_NOT_FOUND");
     }
     throw error;
   }
