@@ -52,7 +52,7 @@ const AppSwitcher = () => {
   };
 
   return (
-    <div className="relative">
+    <div className="relative z-50">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="p-2 hover:bg-slate-100 rounded-xl transition-colors text-slate-400 hover:text-slate-600"
@@ -73,6 +73,8 @@ const AppSwitcher = () => {
                 <a
                   key={app.name}
                   href={app.url}
+                  target={app.url.startsWith('http') ? "_blank" : "_self"}
+                  rel="noopener noreferrer"
                   className="flex items-center gap-3 p-3 hover:bg-slate-50 rounded-xl transition-colors group"
                 >
                   <div className={`p-2 rounded-lg transition-colors ${app.name.includes('Generator') ? 'bg-violet-100 text-violet-600' : 'bg-slate-100 text-slate-500 group-hover:bg-white group-hover:shadow-sm'}`}>
