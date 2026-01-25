@@ -2,6 +2,69 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  :root {
+    /* Brand Colors - Modern Creative Studio */
+    --color-primary: #8B5CF6;
+    /* Violet */
+    --color-secondary: #EC4899;
+    /* Pink */
+    --color-accent: #06B6D4;
+    /* Cyan */
+    --color-surface: #FFFFFF;
+    --color-bg: #F8FAFC;
+
+    /* Gradients */
+    --gradient-brand: linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%);
+    --gradient-surface: linear-gradient(180deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.4) 100%);
+
+    /* Shadows */
+    --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    --shadow-float: 0 20px 40px -10px rgba(0, 0, 0, 0.1);
+  }
+
+  body {
+    font-family: 'Inter', 'Noto Sans TC', system-ui, sans-serif;
+    background-color: var(--color-bg);
+    /* Subtle Grid Pattern */
+    background-image:
+      linear-gradient(to right, rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    color: #1E293B;
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+@layer components {
+
+  /* Glassmorphism Card - The Core Component */
+  .glass-panel {
+    @apply bg-white/60 backdrop-blur-xl border border-white/40 shadow-xl;
+    box-shadow: var(--shadow-glass);
+  }
+
+  /* Floating HUD - For Toolbars */
+  .hud-panel {
+    @apply bg-white/80 backdrop-blur-2xl border border-white/50 shadow-2xl rounded-2xl;
+    box-shadow: var(--shadow-float);
+  }
+
+  /* Modern Gradient Text */
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-violet-600 to-pink-500;
+  }
+
+  /* Interactive Elements */
+  .btn-primary {
+    @apply bg-gradient-to-r from-violet-600 to-pink-500 text-white font-bold shadow-lg shadow-violet-500/20 hover:shadow-violet-500/40 hover:scale-[1.02] active:scale-95 transition-all duration-200;
+  }
+
+  .card-hover {
+    @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-xl border border-white/60;
+  }
+}
+
 @layer utilities {
   .text-shadow-sm {
     text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.1);

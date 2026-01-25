@@ -1,18 +1,19 @@
-
 import React, { useState, useRef, useEffect } from 'react';
-import { Camera, Upload, Trash2, Download, Plus, Sparkles, Image as ImageIcon, Key, ExternalLink, Cpu, Settings, Palette, Type, Ban, FileArchive, Layers, Info, AlertTriangle, ExternalLink as LinkIcon, Scissors, Check, X, RefreshCw, Wand2, Star, ChevronRight, ShieldCheck, Ruler, Move, Home } from 'lucide-react';
+import { Camera, Upload, Trash2, Download, Plus, Sparkles, Image as ImageIcon, Key, ExternalLink, Cpu, Settings, Palette, Type, Ban, FileArchive, Layers, Info, AlertTriangle, ExternalLink as LinkIcon, Scissors, Check, X, RefreshCw, Wand2, Star, ChevronRight, ShieldCheck, Ruler, Move, Home, LayoutGrid, Eraser, Zap, Feather, Cloud, Disc, Tv, Heart } from 'lucide-react';
 import JSZip from 'jszip';
 import Button from './components/Button';
 import { generateSticker } from './services/geminiService';
-import { COMMON_PHRASES, STICKER_STYLES, Sticker } from './types';
+import { THEMES, Sticker, StickerTheme } from './types';
+
+// ... (Keep existing AppSwitcher)
 
 const Stepper = ({ label, value, min, max, onChange }: { label: string, value: number, min: number, max: number, onChange: (val: number) => void }) => (
   <div className="space-y-1">
-    <label className="text-[10px] font-bold text-[#9A8C98] uppercase tracking-wider">{label}</label>
-    <div className="flex items-center bg-[#F2EFE9] border border-[#E6E2DE] rounded-2xl overflow-hidden shadow-sm">
+    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{label}</label>
+    <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl overflow-hidden shadow-sm hover:border-violet-300 transition-colors">
       <button
         onClick={() => onChange(Math.max(min, value - 1))}
-        className="p-3 text-[#9A8C98] hover:bg-[#E6E2DE] active:bg-[#D8D4CF] transition-colors"
+        className="p-3 text-slate-400 hover:bg-slate-100 active:bg-slate-200 transition-colors"
         disabled={value <= min}
       >
         <span className="text-sm font-bold">-</span>
@@ -21,11 +22,11 @@ const Stepper = ({ label, value, min, max, onChange }: { label: string, value: n
         type="number"
         value={value}
         readOnly
-        className="w-full py-2 text-center bg-transparent font-bold text-sm outline-none appearance-none text-[#5E503F]"
+        className="w-full py-2 text-center bg-transparent font-bold text-sm outline-none appearance-none text-slate-700"
       />
       <button
         onClick={() => onChange(Math.min(max, value + 1))}
-        className="p-3 text-[#5E503F] hover:bg-[#E6E2DE] active:bg-[#D8D4CF] transition-colors"
+        className="p-3 text-slate-700 hover:bg-slate-100 active:bg-slate-200 transition-colors"
         disabled={value >= max}
       >
         <span className="text-sm font-bold">+</span>
@@ -34,16 +35,84 @@ const Stepper = ({ label, value, min, max, onChange }: { label: string, value: n
   </div>
 );
 
+import { APPS } from './config/apps';
+
+const AppSwitcher = () => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  // Icon mapping helper
+  const getIcon = (iconName: string) => {
+    switch (iconName) {
+      case 'Eraser': return <Eraser size={16} />;
+      case 'Sparkles': return <Sparkles size={16} />;
+      case 'Layers': return <Layers size={16} />;
+      default: return <LayoutGrid size={16} />;
+    }
+  };
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="p-2 hover:bg-slate-100 rounded-xl transition-colors text-slate-400 hover:text-slate-600"
+        title="Switch App"
+      >
+        <LayoutGrid size={20} />
+      </button>
+
+      {isOpen && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
+          <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-3 bg-slate-50 border-b border-slate-100">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Switch Application</span>
+            </div>
+            <div className="p-1">
+              {APPS.map((app) => (
+                <a
+                  key={app.name}
+                  href={app.url}
+                  className="flex items-center gap-3 p-3 hover:bg-slate-50 rounded-xl transition-colors group"
+                >
+                  <div className={`p-2 rounded-lg transition-colors ${app.name.includes('Generator') ? 'bg-violet-100 text-violet-600' : 'bg-slate-100 text-slate-500 group-hover:bg-white group-hover:shadow-sm'}`}>
+                    {getIcon(app.icon)}
+                  </div>
+                  <span className={`text-xs font-bold ${app.name.includes('Generator') ? 'text-violet-600' : 'text-slate-600'}`}>{app.name}</span>
+                  {app.name.includes('Generator') && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-violet-500" />}
+                </a>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
+const getThemeIcon = (iconName: string) => {
+  switch (iconName) {
+    case 'Zap': return <Zap size={20} />;
+    case 'Feather': return <Feather size={20} />;
+    case 'Cloud': return <Cloud size={20} />;
+    case 'Disc': return <Disc size={20} />;
+    case 'Tv': return <Tv size={20} />;
+    case 'Heart': return <Heart size={20} />;
+    default: return <Sparkles size={20} />;
+  }
+};
+
 const App: React.FC = () => {
   const [apiKey, setApiKey] = useState<string>('');
   const [showKeyModal, setShowKeyModal] = useState(false);
   const [tempKey, setTempKey] = useState('');
 
+  const [currentTheme, setCurrentTheme] = useState<StickerTheme>(THEMES[0]);
+
   const [selectedModel, setSelectedModel] = useState<string>('gemini-3-pro-image-preview');
   const [image, setImage] = useState<string | null>(null);
   const [selectedPhrase, setSelectedPhrase] = useState<string>('');
   const [customPhrase, setCustomPhrase] = useState<string>('');
-  const [selectedStyleId, setSelectedStyleId] = useState<string>(STICKER_STYLES[0].id);
+  const [selectedStyleId, setSelectedStyleId] = useState<string>(THEMES[0].styles[0].id);
   const [includeText, setIncludeText] = useState<boolean>(false);
   const [autoRemoveBg, setAutoRemoveBg] = useState<boolean>(true);
   const [batchSize, setBatchSize] = useState<number>(1);
@@ -54,6 +123,13 @@ const App: React.FC = () => {
   const [isZipping, setIsZipping] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Update selected style when theme changes
+  useEffect(() => {
+    setSelectedStyleId(currentTheme.styles[0].id);
+    setSelectedPhrase('');
+    setCustomPhrase('');
+  }, [currentTheme]);
 
   useEffect(() => {
     const storedKey = localStorage.getItem('gemini_api_key');
@@ -209,7 +285,7 @@ const App: React.FC = () => {
     setError(null);
     setProgress({ current: 0, total: batchSize });
 
-    const style = STICKER_STYLES.find(s => s.id === selectedStyleId) || STICKER_STYLES[0];
+    const style = currentTheme.styles.find(s => s.id === selectedStyleId) || currentTheme.styles[0];
 
     try {
       for (let i = 0; i < batchSize; i++) {
@@ -217,7 +293,8 @@ const App: React.FC = () => {
         if (batchSize === 1) {
           phraseToUse = singlePhrase;
         } else {
-          phraseToUse = i < COMMON_PHRASES.length ? COMMON_PHRASES[i].text : COMMON_PHRASES[i % COMMON_PHRASES.length].text;
+          const phrases = currentTheme.phrases;
+          phraseToUse = i < phrases.length ? phrases[i].text : phrases[i % phrases.length].text;
         }
 
         let resultImageUrl = await generateSticker(
@@ -257,136 +334,174 @@ const App: React.FC = () => {
   };
 
   const handleIndividualBgRemoval = async (stickerId: string) => {
-    const sticker = stickers.find(s => s.id === stickerId);
-    if (!sticker) return;
+    const stickerToProcess = stickers.find(s => s.id === stickerId);
+    if (!stickerToProcess) return;
 
-    const transparentUrl = await smartRemoveBackground(sticker.imageUrl);
-    setStickers(prev => prev.map(s => s.id === stickerId ? { ...s, imageUrl: transparentUrl } : s));
+    setIsGenerating(true); // Use isGenerating for individual removal feedback
+    setError(null);
+
+    try {
+      const processedImageUrl = await smartRemoveBackground(stickerToProcess.imageUrl);
+      setStickers(prev => prev.map(s => s.id === stickerId ? { ...s, imageUrl: processedImageUrl } : s));
+    } catch (err: any) {
+      console.error("Failed to remove background:", err);
+      setError(`背景移除失敗: ${err.message || '未知錯誤'}`);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
-  const downloadImage = (url: string, phrase: string) => {
+  const downloadImage = (imageUrl: string, filename: string) => {
     const link = document.createElement('a');
-    link.href = url;
-    link.download = `sticker_${phrase}.png`;
+    link.href = imageUrl;
+    link.download = `${filename.replace(/\s/g, '_')}_sticker.png`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
   const downloadAllAsZip = async () => {
-    if (stickers.length === 0) return;
-    setIsZipping(true);
-    try {
-      const zip = new JSZip();
-      stickers.forEach((sticker, index) => {
-        const base64Data = sticker.imageUrl.split(',')[1];
-        const safePhrase = sticker.phrase.replace(/[^\w\u4e00-\u9fa5]/g, '_');
-        zip.file(`sticker_${index + 1}_${safePhrase}.png`, base64Data, { base64: true });
-      });
-      const content = await zip.generateAsync({ type: "blob" });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(content);
-      link.download = "taiwan_stickers_pack.zip";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (err) {
-      console.error("Error creating ZIP:", err);
-      setError("打包下載失敗。");
-    } finally {
-      setIsZipping(false);
+    if (stickers.length === 0) {
+      setError("沒有貼圖可以下載。");
+      return;
     }
+
+    setIsZipping(true);
+    const zip = new JSZip();
+    const folder = zip.folder("stickers");
+
+    for (const sticker of stickers) {
+      try {
+        const response = await fetch(sticker.imageUrl);
+        const blob = await response.blob();
+        folder?.file(`${sticker.phrase.replace(/\s/g, '_')}_${sticker.id}.png`, blob);
+      } catch (error) {
+        console.error(`Failed to add sticker ${sticker.id} to zip:`, error);
+      }
+    }
+
+    zip.generateAsync({ type: "blob" })
+      .then((content) => {
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(content);
+        link.download = "stickers.zip";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      })
+      .catch(err => {
+        console.error("Failed to generate zip:", err);
+        setError("壓縮檔案失敗。");
+      })
+      .finally(() => {
+        setIsZipping(false);
+      });
   };
 
   return (
-    <div className="min-h-screen pb-20 select-none bg-[#FAF7F5] font-sans text-[#5E503F]">
-
-      {/* API Key Modal */}
+    <div className="min-h-screen pb-20 select-none font-sans text-slate-700 bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-indigo-100/50 via-slate-50 to-pink-50/30">
+      {/* Key Modal */}
       {showKeyModal && (
-        <div className="fixed inset-0 bg-white/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
-          <div className="bg-white/90 backdrop-blur-md rounded-3xl p-8 max-w-md w-full shadow-2xl border border-white ring-1 ring-[#E6E2DE]">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="bg-[#B5838D] p-3 rounded-2xl text-white shadow-lg shadow-[#B5838D]/20">
-                <Key size={24} />
-              </div>
-              <h2 className="text-2xl font-black text-[#6D6875]">設定 API Key</h2>
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-white rounded-3xl p-8 shadow-2xl border border-slate-100 w-full max-w-md space-y-6 animate-in zoom-in-95 duration-300">
+            <div className="text-center">
+              <Key size={32} className="text-violet-500 mx-auto mb-4" />
+              <h3 className="text-xl font-black text-slate-800 mb-2">Enter Your Gemini API Key</h3>
+              <p className="text-sm text-slate-500">
+                We need your Google Gemini API Key to generate stickers. It's stored locally in your browser.
+              </p>
             </div>
-            <p className="text-[#9A8C98] mb-6 font-bold text-sm leading-relaxed">
-              本應用程式需要 Google Gemini API Key。Key 僅儲存於瀏覽器，絕不傳送至伺服器。
-            </p>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-[10px] font-bold text-[#9A8C98] uppercase tracking-wider mb-2">API Key</label>
-                <input
-                  type="password"
-                  value={tempKey}
-                  onChange={(e) => setTempKey(e.target.value)}
-                  placeholder="Paste Gemini API Key here"
-                  className="w-full px-4 py-3 bg-[#F2EFE9] border border-[#E6E2DE] rounded-xl focus:border-[#B5838D] focus:ring-2 focus:ring-[#B5838D]/20 focus:outline-none transition-all font-mono text-sm text-[#5E503F]"
-                />
-              </div>
-              <Button onClick={handleSaveKey} className="w-full text-lg py-3 rounded-2xl shadow-lg shadow-[#B5838D]/20">
-                儲存並開始
+            <input
+              type="password"
+              value={tempKey}
+              onChange={(e) => setTempKey(e.target.value)}
+              placeholder="Enter your API Key here..."
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/10 text-slate-700 shadow-inner placeholder-slate-400"
+            />
+            {error && <p className="text-red-500 text-xs font-bold text-center">{error}</p>}
+            <div className="flex gap-3">
+              <Button onClick={handleSaveKey} className="w-full bg-violet-500 hover:bg-violet-600 text-white shadow-lg shadow-violet-500/20">
+                Save Key
               </Button>
-              <div className="text-center mt-4">
-                <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-[#B5838D] text-xs font-bold hover:underline flex items-center justify-center gap-1">
-                  沒有 Key 嗎？在此獲取 <ExternalLink size={12} />
-                </a>
-              </div>
+              {apiKey && (
+                <Button onClick={handleClearKey} className="w-full bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/20">
+                  Clear Key
+                </Button>
+              )}
             </div>
+            <a
+              href="https://ai.google.dev/gemini-api/docs/get-started/web"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs font-bold text-violet-500 hover:text-violet-600 flex items-center justify-center gap-1.5 transition-colors"
+            >
+              Get your API Key <ExternalLink size={12} />
+            </a>
           </div>
         </div>
       )}
 
-      {/* Nav */}
-      <nav className="glass-card border-b border-[#E6E2DE]/50 sticky top-0 z-50 px-6 py-4 shadow-sm bg-white/70 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="bg-[#B5838D] p-2.5 rounded-2xl text-white shadow-lg shadow-[#B5838D]/20"><Sparkles size={20} /></div>
-            <div>
-              <h1 className="text-xl font-black bg-clip-text text-transparent bg-gradient-to-r from-[#B5838D] to-[#6D6875] tracking-tight leading-none">台漫貼圖王</h1>
-              <span className="text-[9px] font-bold text-[#9A8C98] uppercase tracking-[0.2em]">Taiwanese Anime Sticker</span>
+      {/* Unified Header */}
+      <nav className="fixed top-4 left-4 right-4 z-50">
+        <div className="max-w-7xl mx-auto glass-panel rounded-2xl px-6 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <AppSwitcher />
+            <div className="h-6 w-px bg-slate-200"></div>
+            <div className="flex items-center gap-3">
+              <div className={`bg-gradient-to-br p-2 rounded-xl text-white shadow-lg ${currentTheme.id === 'taiwanese' ? 'from-violet-500 to-pink-500 shadow-violet-500/20' : 'from-teal-500 to-emerald-500 shadow-teal-500/20'}`}>
+                <Sparkles size={18} strokeWidth={2.5} />
+              </div>
+              <div>
+                <h1 className="text-lg font-bold tracking-tight text-slate-800 leading-none">
+                  Sticker Maker <span className={`text-[10px] px-1.5 py-0.5 rounded-md ml-1 align-top ${currentTheme.id === 'taiwanese' ? 'text-pink-500 bg-pink-50' : 'text-teal-600 bg-teal-50'}`}>AI</span>
+                </h1>
+                <p className="text-[10px] font-medium text-slate-400 uppercase tracking-widest mt-0.5">
+                  {currentTheme.name} Edition
+                </p>
+              </div>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 mr-2">
-              <a href="https://tingyusdeco.com/" className="text-[10px] font-bold text-[#9A8C98] hover:text-[#B5838D] flex items-center gap-1 transition-colors">
-                <Home size={16} /> <span className="hidden sm:inline">Back Home</span>
-              </a>
-            </div>
-            {/* Model Selector removed as per user request to strictly use Nanobanana Pro */}
-
+          {/* Right Side Header */}
+          <div className="flex items-center gap-2">
             <button
               onClick={() => { setTempKey(apiKey); setShowKeyModal(true); }}
-              className={`p-2 rounded-xl transition-all border ${apiKey ? 'bg-[#F2EFE9] border-[#E6E2DE] text-[#B5838D]' : 'bg-red-50 border-red-200 text-red-500 animate-pulse'}`}
+              className={`p-2 rounded-xl transition-all border ${apiKey ? 'hover:bg-slate-50 border-transparent text-slate-400 hover:text-violet-500' : 'bg-red-50 border-red-200 text-red-500 animate-pulse'}`}
             >
               <Key size={16} />
             </button>
+            <a href="https://tingyusdeco.com/" className="text-xs font-bold text-slate-400 hover:text-violet-600 flex items-center gap-1.5 transition-colors px-3 py-1.5 hover:bg-slate-50 rounded-lg">
+              <Home size={14} /> <span className="hidden sm:inline">Back Home</span>
+            </a>
           </div>
         </div>
       </nav>
 
-      <main className="max-w-5xl mx-auto px-6 mt-8 space-y-8">
+      <main className="pt-28 pb-12 px-6 max-w-5xl mx-auto space-y-8 relative z-0">
 
-        {/* Info Card */}
-        <section className="bg-white rounded-[2rem] border border-[#E6E2DE] shadow-sm p-6 flex flex-col sm:flex-row gap-6 relative overflow-hidden">
-          <div className="absolute -right-10 -top-10 w-40 h-40 bg-[#FAF7F5] rounded-full opacity-50 pointer-events-none" />
-          <div className="bg-[#E5989B] p-4 rounded-2xl text-white shadow-lg shadow-[#E5989B]/20 flex items-center justify-center h-fit z-10">
-            <Info size={24} />
-          </div>
-          <div className="space-y-2 z-10">
-            <h2 className="text-sm font-black text-[#6D6875] uppercase tracking-wider">貼圖製作指南</h2>
-            <p className="text-xs font-bold text-[#9A8C98] leading-relaxed max-w-2xl">
-              歡迎使用台漫貼圖王！請確認已設定 <span className="text-[#B5838D]">API Key</span>。上傳清晰人像，選擇喜愛的風格與台詞，AI (Nanobanana Pro) 將為您生成去背完美的 LINE/Telegram 貼圖。支援批次生成與 ZIP 打包。
-            </p>
-          </div>
-        </section>
+        {/* Theme Selector */}
+        <div className="flex overflow-x-auto gap-4 pb-2 scrollbar-hide snap-x">
+          {THEMES.map(theme => (
+            <button
+              key={theme.id}
+              onClick={() => setCurrentTheme(theme)}
+              className={`flex-shrink-0 snap-start flex items-center gap-4 p-4 pr-6 rounded-[2rem] border transition-all cursor-pointer ${currentTheme.id === theme.id ? `bg-white border-${theme.colors.primary.split('-')[1]}-500 shadow-lg` : 'bg-white/50 border-slate-200 hover:bg-white'}`}
+            >
+              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-md ${theme.id === currentTheme.id ? `bg-gradient-to-br ${theme.colors.secondary} to-slate-400` : 'bg-slate-200'}`}>
+                {getThemeIcon(theme.icon)}
+              </div>
+              <div className="text-left">
+                <h3 className={`text-sm font-black ${currentTheme.id === theme.id ? theme.colors.primary : 'text-slate-500'}`}>{theme.name}</h3>
+                <p className="text-[10px] font-bold text-slate-400">{theme.styles.length} Styles • {theme.phrases.length} Phrases</p>
+              </div>
+            </button>
+          ))}
+        </div>
 
         {/* Upload Section */}
-        <section className="bg-white rounded-[2rem] border border-[#E6E2DE] shadow-sm p-8">
+        <section className="glass-panel rounded-[2rem] p-8">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-sm font-black flex items-center gap-2 text-[#6D6875] uppercase tracking-wider"><ImageIcon size={18} className="text-[#B5838D]" /> 階段一：上傳照片</h2>
-            {image && <button onClick={() => setImage(null)} className="text-[10px] font-bold text-red-400 hover:text-red-500 flex items-center gap-1"><Trash2 size={12} /> 移除重選</button>}
+            <h2 className="text-sm font-black flex items-center gap-2 text-slate-500 uppercase tracking-widest"><ImageIcon size={18} className="text-violet-500" /> Phase 1: Upload</h2>
+            {image && <button onClick={() => setImage(null)} className="text-[10px] font-bold text-red-400 hover:text-red-500 flex items-center gap-1 bg-red-50 px-3 py-1.5 rounded-lg transition-colors"><Trash2 size={12} /> Remove</button>}
           </div>
 
           {!image ? (
@@ -395,53 +510,51 @@ const App: React.FC = () => {
               onDragLeave={() => setIsDragging(false)}
               onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
-              className={`group border-4 border-dashed rounded-[2rem] p-12 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 min-h-[300px] ${isDragging ? 'drag-active border-[#B5838D] bg-[#B5838D]/5' : 'border-[#E6E2DE] bg-[#FAF7F5] hover:border-[#B5838D]/30 hover:bg-[#F2EFE9]'}`}
+              className={`group border-3 border-dashed rounded-[2rem] p-12 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 min-h-[300px] ${isDragging ? 'drag-active border-violet-500 bg-violet-50/50' : 'border-slate-200 bg-slate-50/50 hover:border-violet-300 hover:bg-white/50'}`}
             >
               <input ref={fileInputRef} type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
-              <div className="bg-white p-6 rounded-full group-hover:scale-110 transition-transform duration-500 shadow-sm border border-[#E6E2DE] text-[#B5838D] mb-6">
+              <div className="bg-white p-6 rounded-3xl group-hover:scale-110 transition-transform duration-500 shadow-lg shadow-violet-500/10 border border-slate-100 text-violet-500 mb-6">
                 <Upload size={32} />
               </div>
-              <h3 className="text-lg font-black text-[#6D6875] tracking-tight">點擊或拖曳照片至此</h3>
-              <p className="mt-2 text-[#9A8C98] font-bold text-xs tracking-wide">支援 JPG, PNG, WebP</p>
+              <h3 className="text-lg font-black text-slate-700 tracking-tight">Click or Drop Photo Here</h3>
+              <p className="mt-2 text-slate-400 font-bold text-xs tracking-wide uppercase">JPG, PNG, WebP Supported</p>
             </div>
           ) : (
-            <div className="relative rounded-[2rem] overflow-hidden border border-[#E6E2DE] bg-[#FAF7F5] shadow-inner max-h-[500px] flex items-center justify-center p-4">
+            <div className="relative rounded-[2rem] overflow-hidden border border-slate-200 bg-slate-50/50 shadow-inner max-h-[500px] flex items-center justify-center p-4">
               <img src={image} alt="Preview" className="max-w-full max-h-full object-contain rounded-xl drop-shadow-xl" />
             </div>
           )}
         </section>
 
-        {/* Configuration Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-
           {/* Style Selection */}
-          <section className="bg-white rounded-[2rem] border border-[#E6E2DE] shadow-sm p-8 space-y-6">
-            <h2 className="text-sm font-black flex items-center gap-2 text-[#6D6875] uppercase tracking-wider"><Palette size={18} className="text-[#B5838D]" /> 階段二：風格選擇</h2>
+          <section className="glass-panel rounded-[2rem] p-8 space-y-6">
+            <h2 className="text-sm font-black flex items-center gap-2 text-slate-500 uppercase tracking-widest"><Palette size={18} className={currentTheme.id === 'taiwanese' ? 'text-pink-500' : 'text-teal-500'} /> Phase 2: Style</h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {STICKER_STYLES.map((style) => (
+              {currentTheme.styles.map((style) => (
                 <button
                   key={style.id}
                   onClick={() => setSelectedStyleId(style.id)}
-                  className={`p-4 rounded-2xl border transition-all flex flex-col items-center gap-2 text-center group ${selectedStyleId === style.id ? 'bg-[#FAF7F5] border-[#B5838D] shadow-inner' : 'bg-white border-[#E6E2DE] hover:border-[#B5838D]/30'}`}
+                  className={`p-4 rounded-2xl border transition-all flex flex-col items-center gap-3 text-center group ${selectedStyleId === style.id ? `bg-slate-50 ${currentTheme.id === 'taiwanese' ? 'border-pink-500' : 'border-teal-500'} shadow-inner` : 'bg-white/50 border-slate-200 hover:bg-white'}`}
                 >
-                  <div className={`p-2 rounded-full transition-colors ${selectedStyleId === style.id ? 'bg-[#B5838D] text-white shadow-sm' : 'bg-[#F2EFE9] text-[#9A8C98]'}`}>
+                  <div className={`p-2.5 rounded-full transition-colors ${selectedStyleId === style.id ? `${currentTheme.id === 'taiwanese' ? 'bg-pink-500' : 'bg-teal-500'} text-white shadow-md` : 'bg-slate-100 text-slate-400'}`}>
                     <Palette size={16} />
                   </div>
-                  <span className={`text-xs font-black ${selectedStyleId === style.id ? 'text-[#B5838D]' : 'text-[#6D6875]'}`}>{style.name}</span>
+                  <span className={`text-xs font-black ${selectedStyleId === style.id ? (currentTheme.id === 'taiwanese' ? 'text-pink-600' : 'text-teal-600') : 'text-slate-500'}`}>{style.name}</span>
                 </button>
               ))}
             </div>
           </section>
 
           {/* Phrase Selection */}
-          <section className="bg-white rounded-[2rem] border border-[#E6E2DE] shadow-sm p-8 space-y-6">
-            <h2 className="text-sm font-black flex items-center gap-2 text-[#6D6875] uppercase tracking-wider"><Type size={18} className="text-[#B5838D]" /> 階段三：慣用語</h2>
+          <section className="glass-panel rounded-[2rem] p-8 space-y-6">
+            <h2 className="text-sm font-black flex items-center gap-2 text-slate-500 uppercase tracking-widest"><Type size={18} className={currentTheme.id === 'taiwanese' ? 'text-violet-500' : 'text-orange-500'} /> Phase 3: Phrase</h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {COMMON_PHRASES.map((phrase) => (
+              {currentTheme.phrases.map((phrase) => (
                 <button
                   key={phrase.text}
                   onClick={() => { setSelectedPhrase(phrase.text); setCustomPhrase(''); setBatchSize(1); }}
-                  className={`py-2 px-3 rounded-xl border text-[10px] font-bold transition-all ${selectedPhrase === phrase.text && batchSize === 1 ? 'bg-[#E5989B] text-white border-[#E5989B] shadow-md' : 'bg-white text-[#6D6875] border-[#E6E2DE] hover:border-[#E5989B]/50'}`}
+                  className={`py-2 px-3 rounded-xl border text-[10px] font-bold transition-all ${selectedPhrase === phrase.text && batchSize === 1 ? `${currentTheme.id === 'taiwanese' ? 'bg-violet-500 border-violet-500' : 'bg-orange-400 border-orange-400'} text-white shadow-md` : 'bg-white border-slate-200 text-slate-500 hover:text-slate-800'}`}
                 >
                   {phrase.text}
                 </button>
@@ -449,30 +562,31 @@ const App: React.FC = () => {
             </div>
             <input
               type="text"
-              placeholder="或是自訂台詞..."
+              placeholder="Or type custom phrase..."
               value={customPhrase}
               onChange={(e) => { setCustomPhrase(e.target.value); setSelectedPhrase(''); setBatchSize(1); }}
-              className="w-full px-4 py-3 bg-[#F2EFE9] border border-[#E6E2DE] rounded-2xl font-bold text-xs outline-none focus:border-[#B5838D] focus:ring-2 focus:ring-[#B5838D]/10 text-[#5E503F] shadow-inner placeholder-[#9A8C98]"
+              className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-2xl font-bold text-xs outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/10 text-slate-700 shadow-inner placeholder-slate-400"
             />
           </section>
         </div>
 
-        {/* Generate Options */}
-        <section className="bg-white rounded-[2rem] border border-[#E6E2DE] shadow-sm p-8 space-y-6">
+        {/* Generate Options & Results */}
+        <section className="glass-panel rounded-[2rem] p-8 space-y-6">
+          {/* Settings and Generate Button */}
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-black flex items-center gap-2 text-[#6D6875] uppercase tracking-wider"><Settings size={18} className="text-[#B5838D]" /> 階段四：生成設定</h2>
-            <span className="text-[9px] font-bold bg-[#FAF7F5] px-3 py-1 rounded-full text-[#B5838D] border border-[#E6E2DE]">{batchSize} 張貼圖</span>
+            <h2 className="text-sm font-black flex items-center gap-2 text-slate-500 uppercase tracking-widest"><Settings size={18} className="text-slate-400" /> Phase 4: Settings</h2>
+            <span className="text-[9px] font-bold bg-slate-100 px-3 py-1 rounded-full text-slate-500 border border-slate-200">{batchSize} Stickers</span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-3">
-              <label className="text-[10px] font-bold text-[#9A8C98] uppercase tracking-wider">生成數量 (Batch Size)</label>
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Batch Size</label>
               <div className="flex flex-wrap gap-2">
                 {[1, 8, 16, 24, 40].map((num) => (
                   <button
                     key={num}
                     onClick={() => setBatchSize(num)}
-                    className={`w-10 h-10 rounded-xl font-black text-xs border transition-all flex items-center justify-center ${batchSize === num ? 'bg-[#6D6875] text-white border-[#6D6875] shadow-lg' : 'bg-white border-[#E6E2DE] text-[#9A8C98] hover:border-[#6D6875]/50'}`}
+                    className={`w-10 h-10 rounded-xl font-black text-xs border transition-all flex items-center justify-center ${batchSize === num ? 'bg-slate-700 text-white border-slate-700 shadow-lg' : 'bg-white border-slate-200 text-slate-400 hover:border-slate-400'}`}
                   >
                     {num}
                   </button>
@@ -481,21 +595,21 @@ const App: React.FC = () => {
             </div>
 
             <div className="space-y-3">
-              <label className="text-[10px] font-bold text-[#9A8C98] uppercase tracking-wider">文字顯示</label>
-              <div className="flex bg-[#F2EFE9] p-1 rounded-xl border border-[#E6E2DE] w-fit">
-                <button onClick={() => setIncludeText(true)} className={`px-4 py-2 rounded-lg text-[10px] font-bold transition-all ${includeText ? 'bg-white shadow-sm text-[#B5838D]' : 'text-[#9A8C98]'}`}>有文字</button>
-                <button onClick={() => setIncludeText(false)} className={`px-4 py-2 rounded-lg text-[10px] font-bold transition-all ${!includeText ? 'bg-white shadow-sm text-[#B5838D]' : 'text-[#9A8C98]'}`}>無文字</button>
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Text Overlay</label>
+              <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200 w-fit">
+                <button onClick={() => setIncludeText(true)} className={`px-4 py-2 rounded-lg text-[10px] font-bold transition-all ${includeText ? 'bg-white shadow-sm text-violet-600' : 'text-slate-400 hover:text-slate-600'}`}>Show Text</button>
+                <button onClick={() => setIncludeText(false)} className={`px-4 py-2 rounded-lg text-[10px] font-bold transition-all ${!includeText ? 'bg-white shadow-sm text-violet-600' : 'text-slate-400 hover:text-slate-600'}`}>No Text</button>
               </div>
             </div>
 
             <div className="space-y-3">
-              <label className="text-[10px] font-bold text-[#9A8C98] uppercase tracking-wider">背景處理</label>
-              <div onClick={() => setAutoRemoveBg(!autoRemoveBg)} className={`flex items-center justify-between p-3 rounded-2xl border cursor-pointer transition-all ${autoRemoveBg ? 'bg-[#F9F8F6] border-[#B5838D]/30 shadow-sm' : 'bg-white border-[#E6E2DE]'}`}>
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Post-Processing</label>
+              <div onClick={() => setAutoRemoveBg(!autoRemoveBg)} className={`flex items-center justify-between p-3 rounded-2xl border cursor-pointer transition-all ${autoRemoveBg ? 'bg-white border-violet-500/30 shadow-sm ring-1 ring-violet-500/10' : 'bg-slate-50 border-slate-200 opacity-70'}`}>
                 <div className="flex items-center gap-3">
-                  <Scissors size={16} className={autoRemoveBg ? 'text-[#B5838D]' : 'text-[#C5C6C7]'} />
-                  <span className="text-xs font-bold text-[#6D6875]">智慧去背</span>
+                  <Scissors size={16} className={autoRemoveBg ? 'text-violet-500' : 'text-slate-400'} />
+                  <span className="text-xs font-bold text-slate-600">Smart Remove BG</span>
                 </div>
-                <div className={`w-8 h-5 rounded-full relative transition-colors ${autoRemoveBg ? 'bg-[#B5838D]' : 'bg-[#E6E2DE]'}`}>
+                <div className={`w-8 h-5 rounded-full relative transition-colors ${autoRemoveBg ? 'bg-violet-500' : 'bg-slate-300'}`}>
                   <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all shadow-sm ${autoRemoveBg ? 'right-1' : 'left-1'}`} />
                 </div>
               </div>
@@ -503,14 +617,14 @@ const App: React.FC = () => {
           </div>
 
           {error && (
-            <div className="bg-red-50 text-red-700 p-4 rounded-2xl border border-red-100 flex items-center justify-center gap-3 animate-in slide-in-from-top-2">
+            <div className="bg-red-50 text-red-600 p-4 rounded-2xl border border-red-100 flex items-center justify-center gap-3 animate-in slide-in-from-top-2">
               <AlertTriangle size={18} />
               <span className="text-xs font-bold">{error}</span>
             </div>
           )}
 
-          <Button onClick={handleGenerate} isLoading={isGenerating} disabled={!image || (batchSize === 1 && !selectedPhrase && !customPhrase)} className="w-full text-lg h-16 shadow-xl shadow-[#B5838D]/20">
-            <Wand2 size={24} /> {isGenerating ? `生成中...` : '立即生成'}
+          <Button onClick={handleGenerate} isLoading={isGenerating} disabled={!image || (batchSize === 1 && !selectedPhrase && !customPhrase)} className="w-full text-lg h-16 shadow-xl shadow-violet-500/20 bg-gradient-to-r from-violet-600 to-pink-500 hover:brightness-110 active:scale-[0.99] transition-all rounded-2xl border-none">
+            <Wand2 size={24} className="mr-2" /> {isGenerating ? `Generating Magic...` : 'Generate Stickers'}
           </Button>
         </section>
 
@@ -518,23 +632,23 @@ const App: React.FC = () => {
         {stickers.length > 0 && (
           <section className="space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-black flex items-center gap-2 text-[#6D6875] uppercase tracking-wider"><Star size={18} className="text-[#E5989B]" /> 生成結果 ({stickers.length})</h2>
-              <button onClick={downloadAllAsZip} disabled={isZipping} className="bg-[#FAF7F5] hover:bg-[#F2EFE9] text-[#6D6875] border border-[#E6E2DE] px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all">
-                <FileArchive size={14} /> 打包下載
+              <h2 className="text-sm font-black flex items-center gap-2 text-slate-500 uppercase tracking-widest"><Star size={18} className="text-yellow-400" /> Results ({stickers.length})</h2>
+              <button onClick={downloadAllAsZip} disabled={isZipping} className="bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shadow-sm">
+                <FileArchive size={14} /> Download ZIP
               </button>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
               {stickers.map((sticker) => (
-                <div key={sticker.id} className="bg-white rounded-3xl p-3 shadow-sm border border-[#E6E2DE] group hover:shadow-md transition-all animate-in zoom-in-95 duration-300">
-                  <div className="aspect-square rounded-2xl bg-[#FAF7F5] overflow-hidden relative border border-[#E6E2DE]/50" style={{ backgroundImage: 'radial-gradient(#e2e8f0 1px, transparent 1px)', backgroundSize: '10px 10px' }}>
-                    <img src={sticker.imageUrl} alt={sticker.phrase} className="w-full h-full object-contain" />
-                    <div className="absolute inset-0 bg-white/40 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2 items-center justify-center backdrop-blur-sm">
-                      <button onClick={() => downloadImage(sticker.imageUrl, sticker.phrase)} className="bg-white p-2.5 rounded-full text-[#B5838D] shadow-lg hover:scale-110 transition-transform"><Download size={18} /></button>
-                      <button onClick={() => handleIndividualBgRemoval(sticker.id)} className="bg-white p-2.5 rounded-full text-[#6D6875] shadow-lg hover:scale-110 transition-transform"><Scissors size={18} /></button>
+                <div key={sticker.id} className="glass-panel p-3 rounded-3xl group hover:shadow-xl transition-all animate-in zoom-in-95 duration-300 hover:-translate-y-1">
+                  <div className="aspect-square rounded-2xl bg-slate-50/50 overflow-hidden relative border border-slate-200/50" style={{ backgroundImage: 'radial-gradient(#cbd5e1 1px, transparent 1px)', backgroundSize: '8px 8px' }}>
+                    <img src={sticker.imageUrl} alt={sticker.phrase} className="w-full h-full object-contain p-2" />
+                    <div className="absolute inset-0 bg-slate-900/10 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2 items-center justify-center backdrop-blur-[2px]">
+                      <button onClick={() => downloadImage(sticker.imageUrl, sticker.phrase)} className="bg-white p-2.5 rounded-full text-violet-500 shadow-lg hover:scale-110 transition-transform"><Download size={18} /></button>
+                      <button onClick={() => handleIndividualBgRemoval(sticker.id)} className="bg-white p-2.5 rounded-full text-pink-500 shadow-lg hover:scale-110 transition-transform"><Scissors size={18} /></button>
                     </div>
                   </div>
-                  <div className="mt-3 text-center font-black text-[#5E503F] tracking-wider text-xs truncate opacity-80">{sticker.phrase}</div>
+                  <div className="mt-3 text-center font-black text-slate-600 tracking-wider text-xs truncate opacity-80 px-2">{sticker.phrase}</div>
                 </div>
               ))}
             </div>
@@ -542,31 +656,36 @@ const App: React.FC = () => {
         )}
       </main>
 
-      <footer className="fixed bottom-0 w-full bg-white/60 backdrop-blur-xl border-t border-[#E6E2DE] py-4 text-center z-40">
-        <p className="text-[9px] text-[#9A8C98] font-bold uppercase tracking-[0.2em] opacity-80">&copy; 2026 TingYu's Deco · TingYu’s AI Art · All rights reserved</p>
+      {/* Footer and Loading Overlay */}
+      <footer className="fixed bottom-4 right-6 z-40 hidden md:block text-right pointer-events-none">
+        <div className="pointer-events-auto inline-block">
+          <div className="glass-panel px-4 py-2 rounded-xl text-[10px] text-slate-400 font-bold uppercase tracking-widest hover:text-violet-600 transition-colors cursor-default border-slate-200/50">
+            TingYu’s Creative OS <span className="opacity-30 mx-2">|</span> v2.0
+          </div>
+        </div>
       </footer>
 
-      {/* Loading Overlay */}
       {isGenerating && (
-        <div className="fixed inset-0 bg-white/80 backdrop-blur-lg z-[60] flex flex-col items-center justify-center p-6 text-center animate-in fade-in">
+        <div className="fixed inset-0 bg-slate-50/80 backdrop-blur-lg z-[60] flex flex-col items-center justify-center p-6 text-center animate-in fade-in">
           <div className="relative w-24 h-24 mb-6">
-            <div className="absolute inset-0 border-4 border-[#F2EFE9] rounded-full"></div>
-            <div className="absolute inset-0 border-4 border-[#B5838D] rounded-full border-t-transparent animate-spin"></div>
-            <div className="absolute inset-0 flex items-center justify-center text-[#B5838D]">
+            <div className="absolute inset-0 border-4 border-slate-200 rounded-full"></div>
+            <div className="absolute inset-0 border-4 border-violet-500 rounded-full border-t-transparent animate-spin"></div>
+            <div className="absolute inset-0 flex items-center justify-center text-violet-500">
               <Sparkles size={32} className="animate-pulse" />
             </div>
           </div>
-          <h3 className="text-xl font-black text-[#6D6875] mb-2">{batchSize > 1 ? `批次生成中 (${progress.current}/${batchSize})` : 'AI 繪製中...'}</h3>
-          <p className="text-[#9A8C98] font-bold text-xs tracking-wide">正在施展綠幕魔法與去背工藝</p>
+          <h3 className="text-xl font-black text-slate-700 mb-2">{batchSize > 1 ? `Batch Processing (${progress.current}/${batchSize})` : 'Generating AI Art...'}</h3>
+          <p className="text-slate-400 font-bold text-xs tracking-wide uppercase">Applying Green Screen Magic & Removal</p>
           {batchSize > 1 && (
-            <div className="w-64 bg-[#F2EFE9] h-1.5 rounded-full mt-6 overflow-hidden">
-              <div className="bg-[#B5838D] h-full transition-all duration-300" style={{ width: `${(progress.current / batchSize) * 100}%` }}></div>
+            <div className="w-64 bg-slate-200 h-1.5 rounded-full mt-6 overflow-hidden">
+              <div className="bg-gradient-to-r from-violet-500 to-pink-500 h-full transition-all duration-300" style={{ width: `${(progress.current / batchSize) * 100}%` }}></div>
             </div>
           )}
         </div>
       )}
     </div>
   );
+
 };
 
 export default App;
