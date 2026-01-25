@@ -18,4 +18,9 @@ export const APPS = [
         url: isDev ? 'http://localhost:3002' : 'https://sticker-master-ai.vercel.app',
         icon: 'Layers'
     },
+    {
+        name: 'LayerLab (Editor)',
+        url: isDev ? 'http://localhost:3003' : 'https://sticker-layerlab.vercel.app',
+        icon: 'Palette'
+    }
 ];

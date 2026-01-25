@@ -46,6 +46,7 @@ const AppSwitcher = () => {
       case 'Eraser': return <Eraser size={16} />;
       case 'Sparkles': return <Sparkles size={16} />;
       case 'Layers': return <Layers size={16} />;
+      case 'Palette': return <Palette size={16} />;
       default: return <LayoutGrid size={16} />;
     }
   };
