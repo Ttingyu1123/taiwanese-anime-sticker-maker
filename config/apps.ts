@@ -19,7 +19,7 @@ export const APPS = [
     },
     {
         name: 'LayerLab (Editor)',
-        url: isDev ? 'http://localhost:3003' : 'https://sticker-layerlab.vercel.app',
+        url: isDev ? 'http://localhost:3003' : 'https://Ttingyu1.github.io/Sticker_LayerLab/',
         icon: 'Palette'
     }
 ];
